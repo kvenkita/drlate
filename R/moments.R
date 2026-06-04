@@ -160,8 +160,13 @@ term_const <- function(value) {
 #' forms that do not fit the contrast/scalar templates.
 #' @noRd
 make_custom_block <- function(ctx, eq, start, momentfun) {
+  n <- ctx$n
   new_block(eq, eq, start,
-    function(theta, layout) cbind(momentfun(theta, layout)))
+    function(theta, layout) {
+      m <- momentfun(theta, layout)
+      if (length(m) == 1L) m <- rep(m, n)  # constant-per-obs moments
+      cbind(m)
+    })
 }
 
 #' Scalar moment: param - (term1(theta) - term0(theta)), optionally restricted
