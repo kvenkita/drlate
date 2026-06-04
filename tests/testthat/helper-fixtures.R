@@ -51,7 +51,9 @@ expect_matches_fixture <- function(fit, id,
   fx <- read_fixture(id)
   b <- unname(coef(fit))
   se <- unname(sqrt(diag(fit$vcov3)))
-  expect_equal(fit$N, unname(fx["N"]))
+  # Stata drlate does not re-post e(N) after `ereturn post`, so the fixture
+  # value is missing ('.'); compare only when present.
+  if (is.finite(fx["N"])) expect_equal(fit$N, unname(fx["N"]))
   expect_equal(unname(fit$dmeanz1), unname(fx["dmeanz1"]), tolerance = 1e-6)
   expect_equal(unname(fit$dmeanz0), unname(fx["dmeanz0"]), tolerance = 1e-6)
   expect_equal(b[1], unname(fx["b_late"]),  tolerance = tol_b)

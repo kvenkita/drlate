@@ -68,8 +68,12 @@ build_ctx <- function(outcome, treatment, instrument, data,
   Xz <- standardize_mm(Xz, w)
 
   # --- Compliance means (drlate_estimate.ado section 5) ---
-  dmeanz1 <- wmean(d[z == 1], w[z == 1])
-  dmeanz0 <- wmean(d[z == 0], w[z == 0])
+  # Stata uses a plain `summarize` here, i.e. UNWEIGHTED means even under
+  # pweights. Harmless for estimation (the values only enter the moment
+  # conditions when exactly 0 or 1, where weighting is irrelevant), but
+  # replicated so the reported dmeanz1/dmeanz0 match e() exactly.
+  dmeanz1 <- mean(d[z == 1])
+  dmeanz0 <- mean(d[z == 0])
   case <- if (dmeanz0 %in% c(0, 1) && dmeanz1 %in% c(0, 1)) "bothdeg"
           else if (dmeanz0 %in% c(0, 1)) "z0deg"
           else if (dmeanz1 %in% c(0, 1)) "z1deg"

@@ -35,15 +35,15 @@ test_that("weights as a vector and as a column name agree", {
   expect_equal(f1$vcov3, f2$vcov3)
 })
 
-test_that("singleton clusters reproduce robust SEs up to M/(M-1)", {
+test_that("singleton clusters reproduce robust SEs exactly", {
+  # Stata's gmm vce(cluster) applies no M/(M-1) factor, so one cluster per
+  # observation is identical to vce(robust).
   d <- drlate_sim
   fit_r <- drlate(lwage ~ age, nvstat ~ age, rsncode ~ age, data = d)
   fit_c <- drlate(lwage ~ age, nvstat ~ age, rsncode ~ age, data = d,
                   cluster = seq_len(nrow(d)))
-  n <- nrow(d)
-  expect_equal(fit_c$N_clust, n)
-  expect_equal(diag(fit_c$vcov3), diag(fit_r$vcov3) * n / (n - 1),
-               tolerance = 1e-10)
+  expect_equal(fit_c$N_clust, nrow(d))
+  expect_equal(diag(fit_c$vcov3), diag(fit_r$vcov3), tolerance = 1e-10)
 })
 
 test_that("clustered SEs run for every estimand/method combination", {

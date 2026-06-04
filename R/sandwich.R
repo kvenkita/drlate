@@ -18,10 +18,11 @@ drlate_vcov <- function(sys, theta, w, cluster = NULL) {
   if (is.null(cluster)) {
     B <- crossprod(G) / n
   } else {
+    # Stata's gmm vce(cluster) applies NO small-sample factor (verified
+    # against fixtures: an M/(M-1) correction overstates SEs by exactly
+    # sqrt(M/(M-1))).
     Gc <- rowsum(G, group = cluster)
-    M <- nrow(Gc)
-    # Stata gmm vce(cluster) small-sample factor: M/(M-1)
-    B <- crossprod(Gc) / n * (M / (M - 1))
+    B <- crossprod(Gc) / n
   }
   V <- Ainv %*% B %*% t(Ainv) / n
   dimnames(V) <- list(names(theta), names(theta))
