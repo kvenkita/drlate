@@ -1,7 +1,7 @@
 Package: drlate
 Type: Package
 Title: Doubly Robust Estimation of Local Average Treatment Effects
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: c(
     person("Kailas", "Venkitasubramanian", email = "kailasv@gmail.com",
            role = c("aut", "cre")),
@@ -39,6 +39,7 @@ Suggests:
     rmarkdown,
     haven
 Config/testthat/edition: 3
+Config/Needs/website: pkgdown
 VignetteBuilder: knitr
 URL: https://github.com/kailasv/drlate
 BugReports: https://github.com/kailasv/drlate/issues

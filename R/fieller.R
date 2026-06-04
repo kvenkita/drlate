@@ -3,7 +3,7 @@
 # Inverts the test of H0: num - t * denom = 0 using the JOINT covariance
 # of (num, denom) from the stacked sandwich (vcov_full). Unlike the
 # delta-method (Wald) interval, the Fieller set has correct coverage even
-# when the first stage is weak — at the price of possibly being unbounded.
+# when the first stage is weak, at the price of possibly being unbounded.
 
 #' Compute the Fieller confidence set.
 #' @param num,denom Point estimates of the numerator and denominator.
@@ -47,7 +47,7 @@ format_fieller <- function(f, digits = 4) {
     bounded    = paste0("[", fmt(f$lower), ", ", fmt(f$upper), "]"),
     complement = paste0("(-Inf, ", fmt(f$lower), "] U [",
                         fmt(f$upper), ", Inf)"),
-    `whole-line` = "(-Inf, Inf) — the first stage is uninformative"
+    `whole-line` = "(-Inf, Inf) - the first stage is uninformative"
   )
 }
 

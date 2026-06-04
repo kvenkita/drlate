@@ -8,3 +8,4 @@ inst/doc
 tests/testthat/fixtures/sipp.dta
 tests/testthat/fixtures/sipp.rds
 vignettes/*.html
+docs/

@@ -1,0 +1,58 @@
+url: https://kailasv.github.io/drlate
+
+template:
+  bootstrap: 5
+  bslib:
+    bootswatch: litera
+    primary: "#2c6e8f"
+    base_font: {google: "Source Sans 3"}
+    heading_font: {google: "Source Serif 4"}
+    code_font: {google: "JetBrains Mono"}
+
+home:
+  title: "drlate: Doubly Robust LATE and LATT Estimation"
+  description: >
+    Doubly robust estimation of local average treatment effects in R,
+    validated against the original Stata package.
+
+navbar:
+  structure:
+    left: [primer, reference, articles, news]
+    right: [search, github]
+  components:
+    primer:
+      text: Primer
+      href: articles/drlate-primer.html
+    articles:
+      text: Articles
+      menu:
+        - text: "Package overview and Stata replication"
+          href: articles/drlate.html
+
+reference:
+- title: Estimation
+  desc: Fit doubly robust LATE/LATT estimators.
+  contents:
+  - drlate
+  - drlate_compare
+- title: Diagnostics
+  desc: Check overlap, balance, weights, and instrument strength.
+  contents:
+  - plot.drlate
+  - balance
+- title: Inference
+  desc: Confidence intervals, including weak-instrument-robust sets.
+  contents:
+  - confint.drlate
+- title: Specification tests
+  contents:
+  - dr_hausman
+- title: Data
+  contents:
+  - drlate_sim
+- title: Package
+  contents:
+  - drlate-package
+
+news:
+  one_page: true
