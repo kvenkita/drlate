@@ -55,8 +55,16 @@ end
 
 * --------------------------------------------------------------------------
 * Data preparation (identical processing is replicated on the R side)
+* Prefers a local copy (tests/testthat/fixtures/sipp.dta) because Stata's
+* Java HTTPS stack may fail the TLS handshake on the Brandeis server.
 * --------------------------------------------------------------------------
-use "https://people.brandeis.edu/~tslocz/sipp.dta", clear
+capture confirm file "tests/testthat/fixtures/sipp.dta"
+if !_rc {
+    use "tests/testthat/fixtures/sipp.dta", clear
+}
+else {
+    use "https://people.brandeis.edu/~tslocz/sipp.dta", clear
+}
 drop if kwage == . | educ == . | rsncode == 999
 generate double lwage = ln(kwage)
 

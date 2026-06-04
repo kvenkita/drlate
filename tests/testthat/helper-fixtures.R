@@ -25,8 +25,11 @@ sipp_data <- local({
       return(cache)
     }
     if (!requireNamespace("haven", quietly = TRUE)) return(NULL)
-    url <- "https://people.brandeis.edu/~tslocz/sipp.dta"
-    dta <- tryCatch(haven::read_dta(url), error = function(e) NULL)
+    # Prefer the local copy used by make-fixtures.do; fall back to the URL
+    local_dta <- test_path("fixtures", "sipp.dta")
+    src <- if (file.exists(local_dta)) local_dta
+           else "https://people.brandeis.edu/~tslocz/sipp.dta"
+    dta <- tryCatch(haven::read_dta(src), error = function(e) NULL)
     if (is.null(dta)) return(NULL)
     d <- as.data.frame(dta)
     d <- d[!is.na(d$kwage) & !is.na(d$educ) & d$rsncode != 999, ]
