@@ -19,7 +19,8 @@ drlate(
   cluster = NULL,
   pstolerance = 1e-05,
   osample = FALSE,
-  subset = NULL
+  subset = NULL,
+  keep_data = TRUE
 )
 }
 \arguments{
@@ -68,6 +69,11 @@ estimation with an error. Instead \code{drlate()} returns (invisibly) a
 logical vector marking the violating observations.}
 
 \item{subset}{Optional logical or integer vector selecting rows of \code{data}.}
+
+\item{keep_data}{Logical; retain the internal estimation context (model
+matrices, fitted propensity scores, weights) on the returned object
+(default \code{TRUE}). Required by \code{\link[=plot.drlate]{plot.drlate()}}, \code{\link[=balance]{balance()}}, and the
+bootstrap; set to \code{FALSE} for a leaner object.}
 }
 \value{
 An object of class \code{"drlate"}, a list with components including

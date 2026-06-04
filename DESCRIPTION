@@ -33,6 +33,7 @@ Imports:
     stats,
     numDeriv
 Suggests:
+    ggplot2,
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,

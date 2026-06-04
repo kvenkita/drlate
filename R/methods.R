@@ -29,6 +29,14 @@ print.drlate <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   cat("Instrument model : ", zmodeld, "\n\n", sep = "")
 
   print(coeftable(x), digits = digits)
+
+  fz <- firststage_z(x)
+  cat("\nFirst stage (Z on D): z = ", format(fz, digits = 4), sep = "")
+  if (is.finite(fz) && abs(fz) < 2) {
+    cat("  [weak: the LATE ratio may be unstable;",
+        "see confint(., method = \"fieller\")]")
+  }
+  cat("\n")
   invisible(x)
 }
 
