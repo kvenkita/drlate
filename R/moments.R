@@ -137,9 +137,32 @@ pred_fun <- function(ctx, eq, family, X, degenerate_value = NULL) {
   function(theta, layout) linkinv(lc(theta, layout, eq, X))
 }
 
+#' Term that evaluates to another scalar block's parameter (Stata `{num1}`)
+#' @noRd
+term_param <- function(eq) {
+  force(eq)
+  function(theta, layout) theta[layout[[eq]]]
+}
+
+#' Constant term (a degenerate arm's compliance mean)
+#' @noRd
+term_const <- function(value) {
+  force(value)
+  function(theta, layout) value
+}
+
 # ---------------------------------------------------------------------------
 # Scalar aggregate blocks
 # ---------------------------------------------------------------------------
+
+#' Fully custom single-parameter block: `momentfun(theta, layout)` returns the
+#' per-observation moment column. Used for the hand-written IPW/AIPW moment
+#' forms that do not fit the contrast/scalar templates.
+#' @noRd
+make_custom_block <- function(ctx, eq, start, momentfun) {
+  new_block(eq, eq, start,
+    function(theta, layout) cbind(momentfun(theta, layout)))
+}
 
 #' Scalar moment: param - (term1(theta) - term0(theta)), optionally restricted
 #' to an instrument arm (LATT aggregates are means over the Z=1 subsample).

@@ -20,7 +20,8 @@ fit_ps <- function(ctx) {
 
   if (ctx$ivmodel == "logit") {
     ps <- stats::plogis(drop(Xz %*% b_logit))
-    return(list(bips = b_logit, ps = ps))
+    return(list(bips = b_logit, ps = ps,
+                wt1 = z / ps, wt0 = (1 - z) / (1 - ps)))
   }
 
   if (ctx$ivmodel == "cbps") {
@@ -31,7 +32,8 @@ fit_ps <- function(ctx) {
     }
     b <- newton_solve(gmom, b_logit)
     ps <- stats::plogis(drop(Xz %*% b))
-    return(list(bips = b, ps = ps))
+    return(list(bips = b, ps = ps,
+                wt1 = z / ps, wt0 = (1 - z) / (1 - ps)))
   }
 
   if (ctx$ivmodel == "ipt") {
@@ -51,7 +53,8 @@ fit_ps <- function(ctx) {
     ps0 <- stats::plogis(drop(Xz %*% b0))
     # Combined ps for the overlap check (_drlate_ps.ado)
     ps <- ifelse(z == 1, ps1, ps0)
-    return(list(bips1 = b1, bips0 = b0, ps1 = ps1, ps0 = ps0, ps = ps))
+    return(list(bips1 = b1, bips0 = b0, ps1 = ps1, ps0 = ps0, ps = ps,
+                wt1 = z / ps1, wt0 = (1 - z) / (1 - ps0)))
   }
 
   stop("unknown ivmodel: ", ctx$ivmodel)

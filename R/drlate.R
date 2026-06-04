@@ -107,6 +107,22 @@ drlate <- function(outcome, treatment, instrument, data,
     }
   }
 
+  # Normalize check (drlate_estimate.ado section 7): when the IPW weights
+  # already average to one within rounding (IPT weights do by construction),
+  # the normalized and unnormalized moments coincide and Stata switches to
+  # the unnormalized system.
+  if (!is.null(ps) && ctx$statnorm == "nrm" && method != "ra") {
+    wt1m <- round(wmean(ps$wt1, ctx$w), 6)
+    wt0m <- round(wmean(ps$wt0, ctx$w), 6)
+    if (wt1m == 1 && wt0m == 1) ctx$statnorm <- "unnrm"
+  }
+  # IPT weights are ex-ante normalized (drlate_estimate_late.ado 658-661)
+  if (method == "aipw" && ivmodel == "ipt" && ctx$statnorm == "nrm") {
+    message("IPT weights are ex-ante normalized; switching to unnormalized ",
+            "moments.")
+    ctx$statnorm <- "unnrm"
+  }
+
   est <- if (estimand == "late") estimate_late(ctx, ps)
          else estimate_latt(ctx, ps)
 
