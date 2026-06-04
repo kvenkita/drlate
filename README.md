@@ -51,8 +51,8 @@ summary(fit)
 #> Instrument model : logit (MLE)
 #>
 #>              Estimate Std. Error z value   Pr(>|z|) [95% conf. interval]
-#> LATE: D on Y   0.4414    0.07632   5.783  7.343e-09     0.2918    0.5910
-#> ATE: Z on Y    0.2669    0.04666   5.721  1.057e-08     0.1755    0.3584
+#> LATE: D on Y   0.4705    0.07915   5.944  2.786e-09     0.3153    0.6256
+#> ATE: Z on Y    0.2845    0.05043   5.642  1.679e-08     0.1857    0.3834
 #> ATE: Z on D    0.6048    0.01837  32.929 8.326e-238     0.5688    0.6408
 ```
 

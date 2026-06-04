@@ -27,6 +27,9 @@ A simulated dataset with a binary instrument, a binary treatment with
 two-sided noncompliance, and continuous, positive, and binary outcome
 variables, designed to exercise every model family supported by
 \code{\link[=drlate]{drlate()}}. The complier average treatment effect (LATE) used in the
-data-generating process is 0.5.
+data-generating process is 0.5. The treatment is genuinely endogenous
+(compliance type shifts the baseline outcome, so naive OLS is biased
+upward) and the instrument is only conditionally valid (its propensity
+depends on \code{age} and \code{educ}, so the raw Wald ratio is biased too).
 }
 \keyword{datasets}

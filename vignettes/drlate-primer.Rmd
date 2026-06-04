@@ -1,0 +1,275 @@
+---
+title: "A primer: doubly robust LATE estimation, from intuition to practice"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{A primer: doubly robust LATE estimation, from intuition to practice}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+set.seed(1)
+```
+
+This primer explains, with as little formalism as possible, what the
+estimators in `drlate` do and when you would want them. It is a companion to
+Słoczyński, Uysal, and Wooldridge (2022), *"Doubly Robust Estimation of
+Local Average Treatment Effects Using Inverse Probability Weighted
+Regression Adjustment"* (arXiv:2208.01300), whose method this package — like
+the original Stata command of the same name — implements.
+
+## 1. The problem: a treatment people choose
+
+Suppose you want to know the effect of a treatment $D$ (a job training
+program, military service, a 401(k) plan) on an outcome $Y$ (wages,
+savings). People *choose* whether to take the treatment, and the ones who
+take it differ from the ones who don't in ways you can't fully observe.
+Comparing treated and untreated outcomes — even with regression controls —
+confounds the effect of the treatment with the effect of being the kind of
+person who takes it.
+
+The classic escape is an **instrument** $Z$: a binary variable that shifts
+the *likelihood* of treatment but has no direct channel to the outcome.
+Draft lottery numbers, distance to a college, randomized *encouragement* to
+participate — all push some people into treatment without otherwise
+touching their outcomes.
+
+Imbens and Angrist (1994) showed what an instrument can and cannot give
+you. It cannot reveal the effect of treatment for everyone. It identifies
+the effect for **compliers** — the people whose treatment status is
+actually moved by the instrument. That quantity is the **local average
+treatment effect**:
+
+$$
+\text{LATE} \;=\; \frac{\;\text{effect of } Z \text{ on } Y\;}
+                      {\;\text{effect of } Z \text{ on } D\;}
+$$
+
+The numerator is the *intent-to-treat* effect; the denominator is the
+*first stage* (the share of compliers). With no covariates this ratio is
+the Wald estimator, and it is exactly what two-stage least squares
+computes.
+
+### Why covariates enter
+
+Real instruments are rarely as clean as a lottery. Distance to college is
+exogenous *given* family background and region; a draft lottery is clean,
+but conditioning on covariates still buys precision. So in practice you
+need the instrument to be as-good-as-random **conditional on covariates
+$X$** — and then both the numerator and the denominator above become
+covariate-adjusted contrasts. How exactly to adjust them is the entire
+subject of the paper and this package.
+
+## 2. The four estimators in one picture
+
+Every estimator in `drlate` builds the same ratio; they differ only in how
+each piece is adjusted for $X$. Each piece is an "effect of $Z$ on
+something" — a problem formally identical to estimating an average
+treatment effect of $Z$ under unconfoundedness — so the familiar
+treatment-effects toolbox applies:
+
+| `method` | How it adjusts | Needs correct… |
+|---|---|---|
+| `"ra"` | Regression adjustment: model $Y$ (and $D$) given $X$ in each instrument arm; average the predictions. | outcome/treatment models |
+| `"ipw"` | Inverse probability weighting: model the **instrument propensity score** $p(X) = \Pr(Z=1 \mid X)$; reweight raw means by $1/p$ and $1/(1-p)$. | propensity score |
+| `"aipw"` | Augmented IPW: regression adjustment plus an IPW correction term. | **either one** |
+| `"ipwra"` | IPW **regression adjustment**: fit the outcome/treatment regressions *weighted* by the inverse propensity score. | **either one** |
+
+The last two are **doubly robust (DR)**: they are consistent if the
+propensity score model *or* the regression models are right — you get two
+chances instead of one.
+
+### Why the paper (and the package default) prefers IPWRA
+
+AIPW achieves double robustness by *adding* a correction term, and that
+sum can wander outside the logical range of the outcome — a predicted
+probability of 1.3, a negative count. IPWRA achieves it by *reweighting a
+quasi-likelihood regression*, so as long as you choose a sensible family
+(logit for binary outcomes, Poisson for counts), fitted values stay in
+range by construction. This is why IPWRA has the appealing small-sample
+behavior documented in the paper's simulations, and why
+`method = "ipwra"` is the default.
+
+A second practical lesson from the paper concerns **normalization**. Raw
+IPW weights $Z_i/\hat p(X_i)$ need not average to one in a sample; if a few
+observations have small estimated propensity scores, unnormalized
+estimators can be erratic. Normalizing the weights to sum to one (the
+Hájek construction) fixes this and costs nothing, so `normalized = TRUE`
+is the default — it matters only for `"ipw"` and `"aipw"`; IPWRA is
+normalized by construction.
+
+## 3. A worked example
+
+`drlate_sim` is a simulated dataset built so that the truth is known: a
+binary instrument `rsncode`, a binary treatment `nvstat` with two-sided
+noncompliance (60% compliers), and a continuous outcome `lwage`. The true
+effect for compliers is **0.5**. Crucially, the instrument is *not*
+unconditionally random: the probability of `rsncode = 1` rises with `age`
+and education, and those same variables shift the outcome.
+
+```{r}
+library(drlate)
+data(drlate_sim)
+str(drlate_sim)
+```
+
+### The naive answers fail
+
+Comparing treated to untreated (even though this is "just a regression"):
+
+```{r}
+coef(lm(lwage ~ nvstat + age + educ, drlate_sim))["nvstat"]
+```
+
+Biased upward — always-takers are different people. The raw Wald ratio
+ignores that the instrument favors older, more educated workers:
+
+```{r}
+with(drlate_sim,
+     (mean(lwage[rsncode == 1]) - mean(lwage[rsncode == 0])) /
+     (mean(nvstat[rsncode == 1]) - mean(nvstat[rsncode == 0])))
+```
+
+Twice the truth.
+
+### The drlate answer
+
+Three formulas, one per model: the **outcome** model, the **treatment**
+model, and the **instrument propensity score** model.
+
+```{r}
+fit <- drlate(outcome    = lwage   ~ age + educ,
+              treatment  = nvstat  ~ age + educ,
+              instrument = rsncode ~ age + educ,
+              data = drlate_sim)
+summary(fit)
+```
+
+Read the three rows bottom-up:
+
+* **ATE: Z on D** — the first stage: the instrument moves the treatment
+  probability by about 0.60 (the complier share). If this is tiny, you
+  have a weak instrument and the ratio is fragile.
+* **ATE: Z on Y** — the intent-to-treat effect of the instrument on the
+  outcome.
+* **LATE: D on Y** — their ratio, the causal effect for compliers. The
+  95% interval comfortably covers the true 0.5.
+
+The standard errors here are not an afterthought: every estimation stage
+(the propensity score, both outcome regressions, both treatment
+regressions, and the ratio itself) is stacked into one moment system and a
+joint sandwich variance is computed — the uncertainty from estimating the
+propensity score propagates into the LATE's standard error, exactly as in
+the Stata original.
+
+### Seeing double robustness work
+
+The DGP has the propensity score and the outcomes both depending on `age`
+and `educ`. Give the estimator a *wrong* propensity score model
+(intercept only) but correct regressions — then a *wrong* outcome model
+but a correct propensity score:
+
+```{r}
+# Propensity score misspecified; regressions correct
+coef(drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ 1,
+            data = drlate_sim))[1]
+
+# Regressions misspecified (intercept only); propensity score correct
+coef(drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
+            data = drlate_sim))[1]
+```
+
+Either way the estimate stays near 0.5: one correct model is enough.
+(Misspecify *both* and no estimator can save you.)
+
+## 4. Choosing models and options
+
+### Outcome and treatment families
+
+The treatment and the outcome may each be continuous, binary, or a count;
+choose families so fitted values respect the response's range — the heart
+of the IPWRA recommendation:
+
+```{r}
+# Binary outcome: logit keeps fitted probabilities in [0, 1]
+drlate(hijob ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
+       data = drlate_sim, omodel = "logit")
+
+# Positive outcome: Poisson (quasi-likelihood; no distributional claim)
+coef(drlate(kwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
+            data = drlate_sim, omodel = "poisson"))
+```
+
+### Instrument propensity score flavors
+
+Beyond logit MLE, two estimators tailor the propensity score to its job
+in the weights:
+
+* `ivmodel = "cbps"` — covariate balancing (Imai and Ratkovic 2014):
+  chooses the logit coefficients so the inverse-probability weights
+  exactly balance the covariates between instrument arms.
+* `ivmodel = "ipt"` — inverse probability tilting (Graham, Pinto, and
+  Egel 2012): fits a separate tilted score per arm; the resulting weights
+  are exactly normalized by construction.
+
+```{r}
+coef(drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
+            data = drlate_sim, ivmodel = "ipt"))[1]
+```
+
+### LATT: the effect for treated compliers
+
+`estimand = "latt"` reweights everything toward the treated population —
+"among those who took the treatment, what did it do?" — identified under
+somewhat weaker conditions on the instrument:
+
+```{r}
+coef(drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
+            data = drlate_sim, estimand = "latt"))
+```
+
+### Overlap: the assumption you can check
+
+IPW-type estimators divide by $\hat p(X)$ and $1-\hat p(X)$, so estimated
+propensity scores at 0 or 1 are fatal. `drlate()` refuses to estimate if
+any score falls outside `[pstolerance, 1 - pstolerance]`; set
+`osample = TRUE` to get back a logical vector marking the violating
+observations so you can inspect them and decide how to restrict the
+sample. Weights (`weights =`) and clustered standard errors
+(`cluster =`) are available everywhere.
+
+## 5. Coming from Stata
+
+| Stata | R |
+|---|---|
+| `drlate (lwage age_5) (nvstat age_5) (rsncode age_5)` | `drlate(lwage ~ age_5, nvstat ~ age_5, rsncode ~ age_5, data = d)` |
+| `(y x, poisson)` | `omodel = "poisson"` |
+| `(z x, ipt)` | `ivmodel = "ipt"` |
+| `, latt` | `estimand = "latt"` |
+| `, method(aipw) unnrm` | `method = "aipw", normalized = FALSE` |
+| `[pw = w]` | `weights = "w"` |
+| `, vce(cluster id)` | `cluster = "id"` |
+| `i.educ` factor syntax | a `factor()` column in the formula |
+
+Point estimates and standard errors agree with the Stata package to
+numerical precision; the package's test suite enforces this against
+fixtures generated by Stata on the SIPP extract used in the original help
+file.
+
+## References
+
+* Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2022). "Doubly Robust
+  Estimation of Local Average Treatment Effects Using Inverse Probability
+  Weighted Regression Adjustment." arXiv:2208.01300.
+* Imbens, G. W., and J. D. Angrist (1994). "Identification and Estimation
+  of Local Average Treatment Effects." *Econometrica* 62(2), 467–475.
+* Abadie, A. (2003). "Semiparametric Instrumental Variable Estimation of
+  Treatment Response Models." *Journal of Econometrics* 113(2), 231–263.
+* Graham, B. S., C. C. de Xavier Pinto, and D. Egel (2012). "Inverse
+  Probability Tilting for Moment Condition Models with Missing Data."
+  *Review of Economic Studies* 79(3), 1053–1079.
+* Imai, K., and M. Ratkovic (2014). "Covariate Balancing Propensity
+  Score." *JRSS-B* 76(1), 243–263.

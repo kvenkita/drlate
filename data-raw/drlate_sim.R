@@ -18,8 +18,12 @@ z     <- rbinom(n, 1, pz)
 type  <- sample(c("c", "n", "a"), n, replace = TRUE, prob = c(0.6, 0.25, 0.15))
 d     <- ifelse(type == "a", 1L, ifelse(type == "n", 0L, z))
 
-# Potential outcomes: LATE (complier effect) = 0.5
-y0    <- 1 + 0.8 * x + 0.3 * (educ != "hs") + rnorm(n)
+# Potential outcomes: LATE (complier effect) = 0.5.
+# Compliance type shifts the baseline outcome (always-takers high,
+# never-takers low), so the treatment is genuinely endogenous: naive
+# OLS of y on d is biased upward even with covariate controls.
+y0    <- 1 + 0.8 * x + 0.3 * (educ != "hs") +
+         0.8 * (type == "a") - 0.3 * (type == "n") + rnorm(n)
 tau   <- ifelse(type == "c", 0.5, 0.2)
 y     <- y0 + tau * d
 
