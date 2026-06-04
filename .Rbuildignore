@@ -1,0 +1,8 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^data-raw$
+^inst/reference$
+^\.git$
+^\.gitignore$
+^LICENSE\.md$
+^tests/testthat/fixtures/sipp.*$
