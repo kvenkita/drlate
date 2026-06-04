@@ -26,15 +26,22 @@ print.drlate <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   cat("Estimator        : ", est_line, "\n", sep = "")
   cat("Outcome model    : ", omodeld, "\n", sep = "")
   cat("Treatment model  : ", tmodeld, "\n", sep = "")
-  cat("Instrument model : ", zmodeld, "\n\n", sep = "")
+  cat("Instrument model : ", zmodeld, "\n", sep = "")
+  if (identical(x$vcov_method, "bootstrap")) {
+    cat("Std. errors      : nonparametric bootstrap (",
+        x$boot$reps_ok, " of ", x$boot$reps, " reps)\n", sep = "")
+  }
+  cat("\n")
 
   print(coeftable(x), digits = digits)
 
   fz <- firststage_z(x)
   cat("\nFirst stage (Z on D): z = ", format(fz, digits = 4), sep = "")
   if (is.finite(fz) && abs(fz) < 2) {
-    cat("  [weak: the LATE ratio may be unstable;",
-        "see confint(., method = \"fieller\")]")
+    cat("  [weak: the LATE ratio may be unstable]")
+    f <- fieller_from_fit(x)
+    cat("\nFieller 95% confidence set for the LATE: ",
+        format_fieller(f, digits = max(4L, digits)), sep = "")
   }
   cat("\n")
   invisible(x)
@@ -43,14 +50,20 @@ print.drlate <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
 #' @noRd
 coeftable <- function(x) {
   b <- x$coefficients
-  se <- sqrt(diag(x$vcov3))
+  if (identical(x$vcov_method, "bootstrap")) {
+    se <- unname(x$boot$se)
+    ci <- unname(x$boot$ci)
+    ci_labels <- c("[2.5% boot", "boot 97.5%]")
+  } else {
+    se <- sqrt(diag(x$vcov3))
+    ci <- cbind(b - stats::qnorm(0.975) * se, b + stats::qnorm(0.975) * se)
+    ci_labels <- c("[95% conf.", "interval]")
+  }
   zstat <- b / se
   p <- 2 * stats::pnorm(-abs(zstat))
-  ci <- cbind(b - stats::qnorm(0.975) * se, b + stats::qnorm(0.975) * se)
   out <- cbind(b, se, zstat, p, ci)
   dimnames(out) <- list(names(b),
-    c("Estimate", "Std. Error", "z value", "Pr(>|z|)",
-      "[95% conf.", "interval]"))
+    c("Estimate", "Std. Error", "z value", "Pr(>|z|)", ci_labels))
   out
 }
 
@@ -79,14 +92,54 @@ vcov.drlate <- function(object, full = FALSE, ...) {
 #' @export
 nobs.drlate <- function(object, ...) object$N
 
+#' Confidence intervals for drlate fits
+#'
+#' @param object A fitted [drlate()] object.
+#' @param parm Coefficients to include (names or indices); defaults to all
+#'   three reported quantities.
+#' @param level Confidence level.
+#' @param method `"default"` gives Wald intervals from the joint sandwich
+#'   (or bootstrap percentile intervals when the fit used
+#'   `vcov = "bootstrap"`). `"fieller"` inverts the test of
+#'   `num - t * denom = 0` using the joint covariance of the numerator and
+#'   denominator, giving a confidence set for the LATE/LATT ratio that
+#'   remains valid when the first stage is weak; the set may be an
+#'   interval, the complement of an interval, or the whole line, and is
+#'   returned as a `"drlate_fieller"` object with its own print method.
+#' @param ... Currently unused.
 #' @export
-confint.drlate <- function(object, parm, level = 0.95, ...) {
+confint.drlate <- function(object, parm, level = 0.95,
+                           method = c("default", "fieller"), ...) {
+  method <- match.arg(method)
   b <- object$coefficients
-  se <- sqrt(diag(object$vcov3))
-  if (missing(parm)) parm <- names(b)
   a <- (1 - level) / 2
-  q <- stats::qnorm(1 - a)
-  out <- cbind(b - q * se, b + q * se)[parm, , drop = FALSE]
+
+  if (method == "fieller") {
+    f <- fieller_from_fit(object, level = level)
+    f$estimand <- names(b)[1]
+    class(f) <- "drlate_fieller"
+    return(f)
+  }
+
+  if (missing(parm)) parm <- names(b)
+  if (identical(object$vcov_method, "bootstrap")) {
+    probs <- c(a, 1 - a)
+    out <- t(apply(object$boot$draws, 2, stats::quantile, probs = probs))
+    rownames(out) <- names(b)
+    out <- out[parm, , drop = FALSE]
+  } else {
+    se <- sqrt(diag(object$vcov3))
+    q <- stats::qnorm(1 - a)
+    out <- cbind(b - q * se, b + q * se)[parm, , drop = FALSE]
+  }
   colnames(out) <- sprintf("%.1f %%", 100 * c(a, 1 - a))
   out
+}
+
+#' @export
+print.drlate_fieller <- function(x, digits = 4, ...) {
+  cat("Fieller ", format(100 * x$level), "% confidence set for ",
+      x$estimand, ":\n  ", format_fieller(x, digits = digits), "\n",
+      sep = "")
+  invisible(x)
 }

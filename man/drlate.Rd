@@ -20,7 +20,11 @@ drlate(
   pstolerance = 1e-05,
   osample = FALSE,
   subset = NULL,
-  keep_data = TRUE
+  keep_data = TRUE,
+  vcov = c("analytic", "bootstrap"),
+  boot_reps = 999L,
+  boot_seed = NULL,
+  cores = 1L
 )
 }
 \arguments{
@@ -74,6 +78,21 @@ logical vector marking the violating observations.}
 matrices, fitted propensity scores, weights) on the returned object
 (default \code{TRUE}). Required by \code{\link[=plot.drlate]{plot.drlate()}}, \code{\link[=balance]{balance()}}, and the
 bootstrap; set to \code{FALSE} for a leaner object.}
+
+\item{vcov}{\code{"analytic"} (default) for the joint M-estimation sandwich
+replicating the Stata package, or \code{"bootstrap"} for nonparametric
+bootstrap standard errors and percentile confidence intervals (whole
+clusters are resampled when \code{cluster} is supplied). The analytic
+variance is always computed and stored either way.}
+
+\item{boot_reps}{Number of bootstrap replications (default 999).}
+
+\item{boot_seed}{Optional seed for reproducible bootstrap draws (uses
+L'Ecuyer streams, so results are reproducible across \code{cores}).}
+
+\item{cores}{Number of CPU cores for the bootstrap (default 1). Values
+above 1 use a PSOCK cluster and require the package to be installed
+(not merely loaded with \code{devtools::load_all()}).}
 }
 \value{
 An object of class \code{"drlate"}, a list with components including

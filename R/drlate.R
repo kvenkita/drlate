@@ -44,6 +44,17 @@
 #'   matrices, fitted propensity scores, weights) on the returned object
 #'   (default `TRUE`). Required by [plot.drlate()], [balance()], and the
 #'   bootstrap; set to `FALSE` for a leaner object.
+#' @param vcov `"analytic"` (default) for the joint M-estimation sandwich
+#'   replicating the Stata package, or `"bootstrap"` for nonparametric
+#'   bootstrap standard errors and percentile confidence intervals (whole
+#'   clusters are resampled when `cluster` is supplied). The analytic
+#'   variance is always computed and stored either way.
+#' @param boot_reps Number of bootstrap replications (default 999).
+#' @param boot_seed Optional seed for reproducible bootstrap draws (uses
+#'   L'Ecuyer streams, so results are reproducible across `cores`).
+#' @param cores Number of CPU cores for the bootstrap (default 1). Values
+#'   above 1 use a PSOCK cluster and require the package to be installed
+#'   (not merely loaded with `devtools::load_all()`).
 #'
 #' @return An object of class `"drlate"`, a list with components including
 #'   `coefficients` (the causal estimate, the numerator effect of Z on Y,
@@ -73,8 +84,11 @@ drlate <- function(outcome, treatment, instrument, data,
                    normalized = TRUE,
                    weights = NULL, cluster = NULL,
                    pstolerance = 1e-5, osample = FALSE,
-                   subset = NULL, keep_data = TRUE) {
+                   subset = NULL, keep_data = TRUE,
+                   vcov = c("analytic", "bootstrap"),
+                   boot_reps = 999L, boot_seed = NULL, cores = 1L) {
   cl <- match.call()
+  vcov <- match.arg(vcov)
   omodel <- match.arg(omodel)
   tmodel <- match.arg(tmodel)
   ivmodel <- match.arg(ivmodel)
@@ -126,6 +140,12 @@ drlate <- function(outcome, treatment, instrument, data,
   V3 <- diag(diag(V[idx, idx, drop = FALSE]), nrow = 3L)
   dimnames(V3) <- list(labels, labels)
 
+  boot <- NULL
+  if (vcov == "bootstrap") {
+    boot <- drlate_boot(ctx, reps = boot_reps, seed = boot_seed,
+                        cores = cores)
+  }
+
   structure(list(
     coefficients = b3,
     vcov3 = V3,
@@ -140,7 +160,8 @@ drlate <- function(outcome, treatment, instrument, data,
     omodel = omodel, tmodel = tmodel, ivmodel = ivmodel,
     statnorm = ctx$statnorm,
     case = ctx$case,
-    vcov_method = "analytic",
+    vcov_method = vcov,
+    boot = boot,
     layout = sys$layout,
     pnames = names(sys$theta0),
     ctx = if (keep_data) ctx,
