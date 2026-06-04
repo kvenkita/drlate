@@ -18,14 +18,23 @@ estimate_late <- function(ctx, ps) {
   )
 }
 
-#' Shared: the instrument-PS moment block for the non-IPT models
+#' Shared: PS moment block(s) and the arm reweight functions.
+#' For logit/cbps a single eqips block and reweights through `zhat`;
+#' for ipt two tilt blocks (eqips1, eqips0) and reweights through
+#' `zhat1`/`zhat0` (drlate_estimate_late.ado lines 25-38).
 #' @noRd
-late_ps_block <- function(ctx, ps) {
-  switch(ctx$ivmodel,
-    logit = make_ps_logit_block(ctx, ps$bips),
-    cbps  = make_ps_cbps_block(ctx, ps$bips),
-    stop("ivmodel = \"ipt\" is not implemented yet.", call. = FALSE)
-  )
+late_ps_setup <- function(ctx, ps) {
+  if (ctx$ivmodel == "ipt") {
+    list(blocks = list(make_ps_ipt1_block(ctx, ps$bips1),
+                       make_ps_ipt0_block(ctx, ps$bips0)),
+         rw1 = rw_invp(ctx, "zhat1"),
+         rw0 = rw_inv1mp(ctx, "zhat0"))
+  } else {
+    blk <- switch(ctx$ivmodel,
+      logit = make_ps_logit_block(ctx, ps$bips),
+      cbps  = make_ps_cbps_block(ctx, ps$bips))
+    list(blocks = list(blk), rw1 = rw_invp(ctx), rw0 = rw_inv1mp(ctx))
+  }
 }
 
 #' LATE via inverse-probability-weighted regression adjustment.
@@ -52,26 +61,26 @@ late_ipwra <- function(ctx, ps) {
   denom <- wmean(a1$mu, w) - wmean(a0$mu, w)
   late  <- num / denom
 
-  # PS block first (eqips), then eqy0, eqy1, num, eqd0, eqd1, denom, late
-  blocks <- list(
-    late_ps_block(ctx, ps),
+  # PS block(s) first, then eqy0, eqy1, num, eqd0, eqd1, denom, late
+  setup <- late_ps_setup(ctx, ps)
+  blocks <- c(setup$blocks, list(
     make_glm_block(ctx, "y0", ctx$omodel, ctx$Xo, ctx$y, 0,
-                   rw_inv1mp(ctx), fy0),
+                   setup$rw0, fy0),
     make_glm_block(ctx, "y1", ctx$omodel, ctx$Xo, ctx$y, 1,
-                   rw_invp(ctx), fy1),
+                   setup$rw1, fy1),
     make_contrast_block(ctx, "num",
                         pred_fun(ctx, "y1", ctx$omodel, ctx$Xo),
                         pred_fun(ctx, "y0", ctx$omodel, ctx$Xo), num)
-  )
+  ))
   if (is.null(a0$degenerate_value)) {
     blocks <- c(blocks, list(
       make_glm_block(ctx, "d0", ctx$tmodel, ctx$Xt, ctx$d, 0,
-                     rw_inv1mp(ctx), a0$coefs)))
+                     setup$rw0, a0$coefs)))
   }
   if (is.null(a1$degenerate_value)) {
     blocks <- c(blocks, list(
       make_glm_block(ctx, "d1", ctx$tmodel, ctx$Xt, ctx$d, 1,
-                     rw_invp(ctx), a1$coefs)))
+                     setup$rw1, a1$coefs)))
   }
   blocks <- c(blocks, list(
     make_contrast_block(ctx, "denom",
@@ -162,12 +171,16 @@ late_ra <- function(ctx) {
 late_ipw <- function(ctx, ps) {
   w <- ctx$w; z <- ctx$z
   ones <- matrix(1, ctx$n, 1L, dimnames = list(NULL, "(Intercept)"))
-  rw1 <- rw_invp(ctx)    # z-arm reweight 1/p, via the PS linear index
-  rw0 <- rw_inv1mp(ctx)  # 1/(1-p)
+  setup <- late_ps_setup(ctx, ps)
+  rw1 <- setup$rw1   # z-arm reweight 1/p, via the PS linear index
+  rw0 <- setup$rw0   # 1/(1-p)
   d0deg <- ctx$dmeanz0 %in% c(0, 1)
   d1deg <- ctx$dmeanz1 %in% c(0, 1)
 
-  if (ctx$statnorm == "nrm") {
+  # With IPT the weights are self-normalized, so Stata's "unnormalized"
+  # IPT branch uses the same Hajek/parameter moment structure as the
+  # normalized branch (drlate_estimate_late.ado lines 593-650).
+  if (ctx$statnorm == "nrm" || ctx$ivmodel == "ipt") {
     fw1 <- w / ps$ps
     fw0 <- w / (1 - ps$ps)
     # Intercept-only `regress` fits = Hajek-weighted means
@@ -182,15 +195,14 @@ late_ipw <- function(ctx, ps) {
     denom <- den1s - den0s
     late  <- num / denom
 
-    # Order: eqips eqy0 eqy1 num [eqd0] [eqd1] denom late
-    blocks <- list(
-      late_ps_block(ctx, ps),
+    # Order: eqips* eqy0 eqy1 num [eqd0] [eqd1] denom late
+    blocks <- c(setup$blocks, list(
       make_glm_block(ctx, "y0", "gaussian", ones, ctx$y, 0, rw0, fy0),
       make_glm_block(ctx, "y1", "gaussian", ones, ctx$y, 1, rw1, fy1),
       make_contrast_block(ctx, "num",
                           pred_fun(ctx, "y1", "gaussian", ones),
                           pred_fun(ctx, "y0", "gaussian", ones), num)
-    )
+    ))
     if (!d0deg) {
       blocks <- c(blocks, list(
         make_glm_block(ctx, "d0", "gaussian", ones, ctx$d, 0, rw0, fd0)))
@@ -224,14 +236,13 @@ late_ipw <- function(ctx, ps) {
     y <- ctx$y; d <- ctx$d
 
     # Order: eqips eqy0ipw num [eqd0ipw] denom late
-    blocks <- list(
-      late_ps_block(ctx, ps),
+    blocks <- c(setup$blocks, list(
       make_custom_block(ctx, "y0", y0s, function(theta, layout)
         ew0(theta, layout) * y - theta[layout$y0]),
       make_custom_block(ctx, "num", num, function(theta, layout)
         theta[layout$num] -
           (ew1(theta, layout) * y - ew0(theta, layout) * y))
-    )
+    ))
     if (!d0deg) {
       blocks <- c(blocks, list(
         make_custom_block(ctx, "d0", den0s, function(theta, layout)
@@ -267,8 +278,9 @@ late_ipw <- function(ctx, ps) {
 #' @noRd
 late_aipw <- function(ctx, ps) {
   w <- ctx$w; z <- ctx$z; y <- ctx$y; d <- ctx$d
-  rw1 <- rw_invp(ctx)
-  rw0 <- rw_inv1mp(ctx)
+  setup <- late_ps_setup(ctx, ps)
+  rw1 <- setup$rw1
+  rw0 <- setup$rw0
   ew1 <- function(theta, layout) z * rw1(theta, layout)        # z/p
   ew0 <- function(theta, layout) (1 - z) * rw0(theta, layout)  # (1-z)/(1-p)
 
@@ -297,9 +309,8 @@ late_aipw <- function(ctx, ps) {
     denom <- den1s - den0s
     late  <- num / denom
 
-    # eqips eqy0 eqy1 num0 num1 num then d-blocks per case, denom, late
-    blocks <- list(
-      late_ps_block(ctx, ps),
+    # eqips* eqy0 eqy1 num0 num1 num then d-blocks per case, denom, late
+    blocks <- c(setup$blocks, list(
       make_glm_block(ctx, "y0", ctx$omodel, ctx$Xo, y, 0, rw_one(ctx), fy0),
       make_glm_block(ctx, "y1", ctx$omodel, ctx$Xo, y, 1, rw_one(ctx), fy1),
       make_custom_block(ctx, "num0", num0s, function(theta, layout)
@@ -312,7 +323,7 @@ late_aipw <- function(ctx, ps) {
           pred_y1(theta, layout)),
       make_contrast_block(ctx, "num", term_param("num1"),
                           term_param("num0"), num)
-    )
+    ))
     if (d0deg) {
       # eqd1 denom1 denom  (denom = denom1 - dmeanz0)
       blocks <- c(blocks, list(
@@ -333,6 +344,25 @@ late_aipw <- function(ctx, ps) {
             ew0(theta, layout) * (d - pred_d0(theta, layout)) -
             pred_d0(theta, layout)),
         make_contrast_block(ctx, "denom", term_const(ctx$dmeanz1),
+                            term_param("denom0"), denom)))
+    } else if (ctx$ivmodel == "ipt") {
+      # Interior with IPT: denom0/denom1 ARE separate parameters
+      # (drlate_estimate_late.ado lines 954-963), unlike the non-IPT
+      # interior below — replicated faithfully.
+      blocks <- c(blocks, list(
+        make_glm_block(ctx, "d0", ctx$tmodel, ctx$Xt, d, 0, rw_one(ctx),
+                       a0$coefs),
+        make_glm_block(ctx, "d1", ctx$tmodel, ctx$Xt, d, 1, rw_one(ctx),
+                       a1$coefs),
+        make_custom_block(ctx, "denom0", den0s, function(theta, layout)
+          theta[layout$denom0] -
+            ew0(theta, layout) * (d - pred_d0(theta, layout)) -
+            pred_d0(theta, layout)),
+        make_custom_block(ctx, "denom1", den1s, function(theta, layout)
+          theta[layout$denom1] -
+            ew1(theta, layout) * (d - pred_d1(theta, layout)) -
+            pred_d1(theta, layout)),
+        make_contrast_block(ctx, "denom", term_param("denom1"),
                             term_param("denom0"), denom)))
     } else {
       # Interior: no denom0/denom1 parameters; the denom moment is inline
@@ -364,8 +394,7 @@ late_aipw <- function(ctx, ps) {
     late  <- num / denom
 
     # eqips eqy0 eqy1 eqw1 eqw0 num1 num0 num then d-blocks, denom, late
-    blocks <- list(
-      late_ps_block(ctx, ps),
+    blocks <- c(setup$blocks, list(
       make_glm_block(ctx, "y0", ctx$omodel, ctx$Xo, y, 0, rw_one(ctx), fy0),
       make_glm_block(ctx, "y1", ctx$omodel, ctx$Xo, y, 1, rw_one(ctx), fy1),
       make_custom_block(ctx, "w1", w1s, function(theta, layout)
@@ -384,7 +413,7 @@ late_aipw <- function(ctx, ps) {
           pred_y0(theta, layout)),
       make_contrast_block(ctx, "num", term_param("num1"),
                           term_param("num0"), num)
-    )
+    ))
     if (d0deg && ctx$dmeanz1 != 1) {
       blocks <- c(blocks, list(
         make_glm_block(ctx, "d1", ctx$tmodel, ctx$Xt, d, 1, rw_one(ctx),

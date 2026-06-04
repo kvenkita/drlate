@@ -24,12 +24,15 @@ estimate_latt <- function(ctx, ps) {
   )
 }
 
-#' Instrument-PS block for LATT (logit score, or the single Z=0 IPT tilt)
+#' Instrument-PS block for LATT: logit score, or the single Z=0 IPT tilt
+#' with its parameter equation named `zhat` so that the odds reweight
+#' exp(zhat) refers to the tilted coefficients
+#' (drlate_estimate_latt.ado lines 25-33: bips = bips0).
 #' @noRd
 latt_ps_block <- function(ctx, ps) {
   switch(ctx$ivmodel,
     logit = make_ps_logit_block(ctx, ps$bips),
-    ipt   = stop("ivmodel = \"ipt\" is not implemented yet.", call. = FALSE),
+    ipt   = make_ps_ipt0_block(ctx, ps$bips0, eq = "zhat"),
     stop("ivmodel = \"", ctx$ivmodel, "\" is not available with ",
          "estimand = \"latt\".", call. = FALSE)
   )
