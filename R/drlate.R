@@ -40,6 +40,10 @@
 #'   estimation with an error. Instead `drlate()` returns (invisibly) a
 #'   logical vector marking the violating observations.
 #' @param subset Optional logical or integer vector selecting rows of `data`.
+#' @param keep_data Logical; retain the internal estimation context (model
+#'   matrices, fitted propensity scores, weights) on the returned object
+#'   (default `TRUE`). Required by [plot.drlate()], [balance()], and the
+#'   bootstrap; set to `FALSE` for a leaner object.
 #'
 #' @return An object of class `"drlate"`, a list with components including
 #'   `coefficients` (the causal estimate, the numerator effect of Z on Y,
@@ -69,7 +73,7 @@ drlate <- function(outcome, treatment, instrument, data,
                    normalized = TRUE,
                    weights = NULL, cluster = NULL,
                    pstolerance = 1e-5, osample = FALSE,
-                   subset = NULL) {
+                   subset = NULL, keep_data = TRUE) {
   cl <- match.call()
   omodel <- match.arg(omodel)
   tmodel <- match.arg(tmodel)
@@ -97,34 +101,15 @@ drlate <- function(outcome, treatment, instrument, data,
 
   # Instrument propensity score (not used by RA) + overlap check
   ps <- NULL
-  if (method != "ra") {
-    ps <- fit_ps(ctx)
-    viol <- check_overlap(ps$ps, pstolerance, osample)
-    if (osample && any(viol)) {
-      message(sum(viol), " observation(s) violate the overlap assumption; ",
-              "returning the violation indicator.")
-      return(invisible(viol))
-    }
+  pt <- compute_point(ctx)
+  if (!is.null(pt$viol)) {
+    message(sum(pt$viol), " observation(s) violate the overlap assumption; ",
+            "returning the violation indicator.")
+    return(invisible(pt$viol))
   }
-
-  # Normalize check (drlate_estimate.ado section 7): when the IPW weights
-  # already average to one within rounding (IPT weights do by construction),
-  # the normalized and unnormalized moments coincide and Stata switches to
-  # the unnormalized system.
-  if (!is.null(ps) && ctx$statnorm == "nrm" && method != "ra") {
-    wt1m <- round(wmean(ps$wt1, ctx$w), 6)
-    wt0m <- round(wmean(ps$wt0, ctx$w), 6)
-    if (wt1m == 1 && wt0m == 1) ctx$statnorm <- "unnrm"
-  }
-  # IPT weights are ex-ante normalized (drlate_estimate_late.ado 658-661)
-  if (method == "aipw" && ivmodel == "ipt" && ctx$statnorm == "nrm") {
-    message("IPT weights are ex-ante normalized; switching to unnormalized ",
-            "moments.")
-    ctx$statnorm <- "unnrm"
-  }
-
-  est <- if (estimand == "late") estimate_late(ctx, ps)
-         else estimate_latt(ctx, ps)
+  ps <- pt$ps
+  est <- pt$est
+  ctx <- pt$ctx
 
   sys <- assemble_system(est$blocks)
   V <- drlate_vcov(sys, sys$theta0, ctx$w, ctx$cluster)
@@ -155,6 +140,46 @@ drlate <- function(outcome, treatment, instrument, data,
     omodel = omodel, tmodel = tmodel, ivmodel = ivmodel,
     statnorm = ctx$statnorm,
     case = ctx$case,
+    vcov_method = "analytic",
+    layout = sys$layout,
+    pnames = names(sys$theta0),
+    ctx = if (keep_data) ctx,
+    ps = if (keep_data) ps,
     call = cl
   ), class = "drlate")
+}
+
+#' Point estimation: PS fit, overlap check, normalization switches, and the
+#' sequential estimator. One code path shared by drlate() and the bootstrap.
+#' Returns list(ps, est, ctx) — ctx may carry an updated statnorm — or
+#' list(viol = <logical>) when osample is set and overlap is violated.
+#' @noRd
+compute_point <- function(ctx) {
+  ps <- NULL
+  if (ctx$method != "ra") {
+    ps <- fit_ps(ctx)
+    viol <- check_overlap(ps$ps, ctx$pstolerance, ctx$osample)
+    if (ctx$osample && any(viol)) return(list(viol = viol))
+
+    # Normalize check (drlate_estimate.ado section 7): when the IPW weights
+    # already average to one within rounding (IPT weights do by
+    # construction), the normalized and unnormalized moments coincide and
+    # Stata switches to the unnormalized system.
+    if (ctx$statnorm == "nrm") {
+      wt1m <- round(wmean(ps$wt1, ctx$w), 6)
+      wt0m <- round(wmean(ps$wt0, ctx$w), 6)
+      if (wt1m == 1 && wt0m == 1) ctx$statnorm <- "unnrm"
+    }
+  }
+  # IPT weights are ex-ante normalized (drlate_estimate_late.ado 658-661)
+  if (ctx$method == "aipw" && ctx$ivmodel == "ipt" &&
+      ctx$statnorm == "nrm") {
+    message("IPT weights are ex-ante normalized; switching to unnormalized ",
+            "moments.")
+    ctx$statnorm <- "unnrm"
+  }
+
+  est <- if (ctx$estimand == "late") estimate_late(ctx, ps)
+         else estimate_latt(ctx, ps)
+  list(ps = ps, est = est, ctx = ctx)
 }
