@@ -32,9 +32,16 @@ lc <- function(theta, layout, eq, X) drop(X %*% theta[layout[[eq]]])
 #' Logit MLE score: (z - p) * x
 #' @noRd
 make_ps_logit_block <- function(ctx, coefs, eq = "zhat") {
-  X <- ctx$Xz; z <- ctx$z
+  make_score_logit_block(ctx, eq, ctx$Xz, ctx$z, coefs)
+}
+
+#' Generic logit score block for any binary response/design (used for the
+#' treatment propensity score in the DR Hausman test)
+#' @noRd
+make_score_logit_block <- function(ctx, eq, X, yvar, coefs) {
   new_block(eq, paste0(eq, ":", colnames(X)), coefs,
-    function(theta, layout) (z - stats::plogis(lc(theta, layout, eq, X))) * X)
+    function(theta, layout)
+      (yvar - stats::plogis(lc(theta, layout, eq, X))) * X)
 }
 
 #' CBPS balancing moment: (z/p - (1-z)/(1-p)) * x
@@ -94,10 +101,11 @@ rw_inv1mp <- function(ctx, eq = "zhat") {
   function(theta, layout) 1 + exp(lc(theta, layout, eq, X))
 }
 
-#' Odds p/(1-p) = exp(zhat)   (Z=0 arm of LATT estimators)
+#' Odds p/(1-p) = exp(zhat)   (Z=0 arm of LATT estimators; with `X` it can
+#' reference any propensity score equation, e.g. the treatment PS `dhat`)
 #' @noRd
-rw_odds <- function(ctx, eq = "zhat") {
-  X <- ctx$Xz
+rw_odds <- function(ctx, eq = "zhat", X = NULL) {
+  if (is.null(X)) X <- ctx$Xz
   function(theta, layout) exp(lc(theta, layout, eq, X))
 }
 
@@ -111,9 +119,11 @@ rw_odds <- function(ctx, eq = "zhat") {
 #' regression pieces of LATT; the (family, arm, reweight) triple is the
 #' entire variation between Stata's ~40 hand-written gmm equation strings.
 #' @noRd
-make_glm_block <- function(ctx, eq, family, X, yvar, arm, reweight, coefs) {
+make_glm_block <- function(ctx, eq, family, X, yvar, arm, reweight, coefs,
+                           arm_var = NULL) {
   linkinv <- fam_linkinv(family)
-  a <- if (is.null(arm)) rep(1, ctx$n) else if (arm == 1) ctx$z else 1 - ctx$z
+  av <- if (is.null(arm_var)) ctx$z else arm_var
+  a <- if (is.null(arm)) rep(1, ctx$n) else if (arm == 1) av else 1 - av
   new_block(eq, paste0(eq, ":", colnames(X)), coefs,
     function(theta, layout) {
       mu <- linkinv(lc(theta, layout, eq, X))
@@ -172,8 +182,10 @@ make_custom_block <- function(ctx, eq, start, momentfun) {
 #' Scalar moment: param - (term1(theta) - term0(theta)), optionally restricted
 #' to an instrument arm (LATT aggregates are means over the Z=1 subsample).
 #' @noRd
-make_contrast_block <- function(ctx, eq, term1, term0, start, arm = NULL) {
-  a <- if (is.null(arm)) rep(1, ctx$n) else if (arm == 1) ctx$z else 1 - ctx$z
+make_contrast_block <- function(ctx, eq, term1, term0, start, arm = NULL,
+                                arm_var = NULL) {
+  av <- if (is.null(arm_var)) ctx$z else arm_var
+  a <- if (is.null(arm)) rep(1, ctx$n) else if (arm == 1) av else 1 - av
   new_block(eq, eq, start,
     function(theta, layout) {
       cbind(a * (theta[layout[[eq]]] - (term1(theta, layout) -
