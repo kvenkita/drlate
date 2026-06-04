@@ -41,6 +41,6 @@ Suggests:
 Config/testthat/edition: 3
 Config/Needs/website: pkgdown
 VignetteBuilder: knitr
-URL: https://github.com/kailasv/drlate
-BugReports: https://github.com/kailasv/drlate/issues
+URL: https://github.com/kvenkita/drlate, https://kvenkita.github.io/drlate/
+BugReports: https://github.com/kvenkita/drlate/issues
 LazyData: true

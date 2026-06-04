@@ -10,8 +10,9 @@ Estimates the local average treatment effect (LATE) and the local average treatm
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/kailasv/drlate}
-  \item Report bugs at \url{https://github.com/kailasv/drlate/issues}
+  \item \url{https://github.com/kvenkita/drlate}
+  \item \url{https://kvenkita.github.io/drlate/}
+  \item Report bugs at \url{https://github.com/kvenkita/drlate/issues}
 }
 
 }

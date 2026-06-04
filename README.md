@@ -29,7 +29,7 @@ verifies numerical equivalence against Stata-generated fixtures.
 
 ```r
 # install.packages("remotes")
-remotes::install_github("kailasv/drlate")
+remotes::install_github("kvenkita/drlate")
 ```
 
 ## Usage
@@ -65,6 +65,24 @@ of scenarios on the public SIPP extract and exports estimates and variances
 as CSV fixtures; the testthat suite then asserts equality (estimates to
 1e-6, standard errors to 1e-4 relative). Run it from the package root in
 Stata (`ssc install drlate` first), then `devtools::test()`.
+
+## Citation
+
+If you use drlate in your research, please cite:
+
+> Venkitasubramanian, K. (2026). drlate: Doubly Robust Estimation
+> of the Local Average Treatment Effect in R. R package version 0.1.0.
+> https://github.com/kvenkita/drlate
+
+This package implements the doubly-robust LATE estimator introduced in:
+
+> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2026). DRLATE: Stata
+> module to perform doubly robust estimation of the local average
+> treatment effect (LATE) and the local average treatment effect on the
+> treated (LATT). Statistical Software Components S459708, Boston College
+> Department of Economics.
+
+(`citation("drlate")` prints both entries with BibTeX.)
 
 ## License
 
