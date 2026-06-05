@@ -1,49 +1,18 @@
 # drlate
 
-Doubly robust estimation of the local average treatment effect (LATE) and
-the local average treatment effect on the treated (LATT) in R, following
+`drlate` estimates the local average treatment effect (LATE) and the local
+average treatment effect on the treated (LATT) from observational data with
+a binary instrument, following
 [Słoczyński, Uysal & Wooldridge (2022)](https://doi.org/10.48550/arXiv.2208.01300).
-
-The estimation core is a faithful R port of the Stata package
+It is an R port of the Stata package
 [`drlate`](https://ideas.repec.org/c/boc/bocode/s459708.html) (SSC S459708)
 by S. Derya Uysal, Tymon Słoczyński, and Jeffrey M. Wooldridge: point
-estimates come from the same sequential weighted regressions, and standard
-errors are computed jointly for the instrument propensity score, the outcome
-regression, the treatment regression, and the causal estimand by stacking
-all moment conditions into a single M-estimation system and computing its
-sandwich variance. This is the R equivalent of the original's
-`gmm, onestep iterate(0)` construction. The test suite
-verifies numerical equivalence against Stata-generated fixtures (estimates
-to ~1e-9, standard errors to ~1e-6, across 33 scenarios).
-
-On top of the port, the package adds diagnostics and inference tools that
-the Stata original does not provide, each validated by Monte Carlo (see the
-[validation report](https://kvenkita.github.io/drlate/articles/validation-review.html)).
-
-## Features
-
-### The estimation core (Stata-equivalent)
-
-| | |
-|---|---|
-| Estimands | LATE, LATT |
-| Estimators (`method`) | IPWRA (default), IPW, AIPW, RA |
-| Outcome / treatment models | linear, logit, Poisson |
-| Instrument PS models (`ivmodel`) | logit MLE (default), CBPS, IPT |
-| Weighting | normalized (default) or unnormalized moments |
-| Inference | robust or cluster-robust joint sandwich SEs; sampling weights |
-| Overlap | `pstolerance` enforcement, `osample` violator flagging |
-
-### Beyond the Stata package
-
-| | |
-|---|---|
-| Diagnostics | `plot(fit)`: propensity-score **overlap**, covariate **balance** (love plot), implied **weight** distributions; `balance()` returns weighted/unweighted standardized mean differences |
-| First-stage strength | every printout reports the first-stage z and z² ≈ F, flagging weakness below F = 10 |
-| Weak-IV-robust inference | `confint(fit, method = "fieller")` — Fieller/Anderson–Rubin confidence sets with honest unbounded regimes (Monte Carlo coverage 0.955 where the Wald interval degenerates) |
-| Bootstrap | `drlate(..., vcov = "bootstrap")` — paper-recommended nonparametric bootstrap; cluster-aware, parallel, failure-counting |
-| Specification test | `dr_hausman()` — the doubly robust Hausman test of unconfoundedness from the paper's Section 5 (**not implemented in the Stata package**), with an analytic SE from one jointly stacked moment system; Monte Carlo size 0.047 at nominal 5% |
-| Sensitivity | `drlate_compare()` — IPWRA/IPW/AIPW/RA side by side with a dot-whisker plot |
+estimates come from the same sequential weighted regressions, standard
+errors from the same jointly stacked M-estimation system and its sandwich
+variance, and the test suite verifies numerical equivalence against
+Stata-generated fixtures across 33 scenarios. On top of the port, the
+package provides design diagnostics, weak-instrument-robust and bootstrap
+inference, and the paper's doubly robust Hausman test of unconfoundedness.
 
 ## Installation
 
@@ -52,7 +21,7 @@ the Stata original does not provide, each validated by Monte Carlo (see the
 remotes::install_github("kvenkita/drlate")
 ```
 
-## Usage
+## Example
 
 ```r
 library(drlate)
@@ -78,44 +47,6 @@ summary(fit)
 #> First stage (Z on D): z = 32.93 (z^2 ~ first-stage F = 1084)
 ```
 
-Diagnostics, robustness, and the unconfoundedness test:
-
-```r
-plot(fit, "overlap")                      # propensity-score overlap by arm
-plot(fit, "balance")                      # love plot, unweighted vs IPW
-plot(fit, "weights")                      # implied weight distributions
-
-confint(fit, method = "fieller")          # weak-IV-robust confidence set
-drlate(..., vcov = "bootstrap")           # bootstrap SEs / percentile CIs
-
-cmp <- drlate_compare(lwage ~ age + educ, nvstat ~ age + educ,
-                      rsncode ~ age + educ, data = drlate_sim)
-plot(cmp)                                 # estimator sensitivity
-
-# DR Hausman test of unconfoundedness (one-sided noncompliance)
-d <- drlate_sim; d$nvstat[d$rsncode == 0] <- 0L
-dr_hausman(lwage ~ age + educ, nvstat ~ age + educ,
-           rsncode ~ age + educ, data = d)
-```
-
-## Documentation
-
-- [**Primer**](https://kvenkita.github.io/drlate/articles/drlate-primer.html) —
-  doubly robust LATE estimation from intuition to practice, with worked
-  examples of every feature
-- [**Package overview and Stata replication**](https://kvenkita.github.io/drlate/articles/drlate.html)
-- [**Validation report and peer review**](https://kvenkita.github.io/drlate/articles/validation-review.html) —
-  port equivalence, theory conformance, Monte Carlo evidence
-
-## Validating against Stata
-
-`inst/stata/make-fixtures.do` runs the original Stata `drlate` over a grid
-of scenarios on the public SIPP extract and exports estimates and variances
-as CSV fixtures; the testthat suite then asserts equality (estimates to
-1e-6, standard errors to 1e-4 relative; observed agreement is two to three
-orders of magnitude tighter). Run it from the package root in Stata
-(`ssc install drlate` first), then `devtools::test()`.
-
 ## Citation
 
 If you use drlate in your research, please cite:
@@ -133,6 +64,30 @@ This package implements the doubly-robust LATE estimator introduced in:
 > Department of Economics.
 
 (`citation("drlate")` prints both entries with BibTeX.)
+
+## Features
+
+| | |
+|---|---|
+| Estimands | LATE, LATT |
+| Estimators (`method`) | IPWRA (default), IPW, AIPW, RA |
+| Outcome / treatment models | linear, logit, Poisson |
+| Instrument propensity score models (`ivmodel`) | logit MLE (default), CBPS, IPT |
+| Weighting | normalized (default) or unnormalized moments; sampling weights |
+| Standard errors | joint sandwich over all estimation stages; robust or cluster-robust |
+| Diagnostics | `plot(fit)` for propensity-score overlap, covariate balance, and weight distributions; `balance()` tables; first-stage strength on every printout |
+| Fieller confidence sets | `confint(fit, method = "fieller")` — weak-instrument-robust |
+| Bootstrap | `drlate(..., vcov = "bootstrap")` — cluster-aware percentile intervals |
+| DR Hausman test | `dr_hausman()` — test of unconfoundedness under one-sided noncompliance (paper, Section 5) |
+| Estimator comparison | `drlate_compare()` with a dot-whisker plot |
+| Overlap | `pstolerance` enforcement, `osample` violator flagging |
+
+## Documentation
+
+The [package website](https://kvenkita.github.io/drlate/) serves the
+[primer](https://kvenkita.github.io/drlate/articles/drlate-primer.html),
+the [package overview and Stata replication](https://kvenkita.github.io/drlate/articles/drlate.html),
+and the function reference.
 
 ## License
 
