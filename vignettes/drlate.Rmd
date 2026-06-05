@@ -8,7 +8,9 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                      fig.width = 7, fig.height = 4.2, dpi = 110,
+                      out.width = "100%")
 ```
 
 ## Overview
@@ -19,7 +21,7 @@ a binary instrument, following Słoczyński, Uysal, and Wooldridge (2022).
 It is a faithful R port of the Stata package `drlate` (Statistical Software
 Components S459708) by the same authors.
 
-The package supports:
+The estimation core supports:
 
 * **Estimators** (`method`): inverse-probability-weighted regression
   adjustment (`"ipwra"`, the default, doubly robust), inverse probability
@@ -33,6 +35,23 @@ The package supports:
   and Egel 2012).
 * **Normalized** (default) or unnormalized weighting for IPW and AIPW.
 * Sampling weights and cluster-robust standard errors.
+
+Beyond the Stata original, the package adds:
+
+* **Diagnostics**: `plot()` displays of propensity-score overlap,
+  covariate balance, and implied weights; `balance()` tables; first-stage
+  strength on every printout.
+* **Weak-instrument-robust inference**: Fieller/Anderson–Rubin confidence
+  sets via `confint(method = "fieller")`.
+* **Bootstrap inference**: `vcov = "bootstrap"` (cluster-aware,
+  parallelizable).
+* **The DR Hausman test** of unconfoundedness from the paper's Section 5
+  (`dr_hausman()`), with an analytic standard error from a jointly
+  stacked moment system.
+* **Estimator comparison**: `drlate_compare()` with a dot-whisker plot.
+
+All extensions are validated by Monte Carlo; see the *Validation report
+and peer review* article on the package website.
 
 ### Joint inference
 
@@ -106,6 +125,69 @@ drlate(kwage ~ age + educ, nvstat ~ age + educ, rsncode ~ 1,
 ```{r}
 drlate(lwage ~ age, nvstat ~ age, rsncode ~ age, data = drlate_sim,
        cluster = drlate_sim$educ)
+```
+
+## Diagnostics
+
+`plot()` provides the standard design checks — propensity-score overlap,
+covariate balance before/after weighting (the love plot), and the implied
+weight distributions; `balance()` returns the standardized mean
+differences as a data frame:
+
+```{r diag-balance}
+fit <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+              rsncode ~ age + educ, data = drlate_sim)
+plot(fit, type = "balance")
+balance(fit)
+```
+
+```{r diag-overlap}
+plot(fit, type = "overlap")
+```
+
+## Inference beyond the default sandwich
+
+Every printout reports the first-stage z (with z² ≈ F for a single binary
+instrument) and flags weakness below F = 10. Two additional inference
+tools are available:
+
+```{r}
+# Weak-instrument-robust Fieller confidence set (may be unbounded when
+# the first stage is weak -- that is the honest answer)
+confint(fit, method = "fieller")
+
+# Nonparametric bootstrap (percentile CIs; clusters resampled whole
+# when `cluster` is supplied)
+fit_b <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+                rsncode ~ age + educ, data = drlate_sim,
+                vcov = "bootstrap", boot_reps = 199, boot_seed = 1)
+confint(fit_b)
+```
+
+## The DR Hausman test of unconfoundedness
+
+Under one-sided noncompliance (nobody takes the treatment without the
+instrument), the instrument-based LATT equals the unconfoundedness-based
+ATT if treatment assignment is unconfounded given the covariates —
+Section 5 of the paper turns this into a heterogeneity-robust Hausman
+test, implemented here (it is not available in the Stata package):
+
+```{r}
+d_os <- drlate_sim
+d_os$nvstat[d_os$rsncode == 0] <- 0L
+dr_hausman(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
+           data = d_os)
+```
+
+The simulated treatment is genuinely confounded, and the test rejects.
+
+## Comparing estimators
+
+```{r compare-plot}
+cmp <- drlate_compare(lwage ~ age + educ, nvstat ~ age + educ,
+                      rsncode ~ age + educ, data = drlate_sim)
+cmp
+plot(cmp)
 ```
 
 ## Replicating the Stata examples

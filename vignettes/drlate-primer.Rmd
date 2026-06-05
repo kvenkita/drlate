@@ -10,7 +10,9 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                      fig.width = 7, fig.height = 4.2, dpi = 110,
+                      out.width = "100%")
 set.seed(1)
 ```
 
@@ -19,7 +21,10 @@ estimators in `drlate` do and when you would want them. It is a companion to
 Słoczyński, Uysal, and Wooldridge (2022), *"Doubly Robust Estimation of
 Local Average Treatment Effects Using Inverse Probability Weighted
 Regression Adjustment"* (arXiv:2208.01300), whose method this package — like
-the original Stata command of the same name — implements.
+the original Stata command of the same name — implements. Along the way it
+demonstrates every tool in the package: estimation, diagnostics,
+weak-instrument-robust inference, the bootstrap, the estimator comparison,
+and the doubly robust Hausman test.
 
 ## 1. The problem: a treatment people choose
 
@@ -106,9 +111,11 @@ normalized by construction.
 `drlate_sim` is a simulated dataset built so that the truth is known: a
 binary instrument `rsncode`, a binary treatment `nvstat` with two-sided
 noncompliance (60% compliers), and a continuous outcome `lwage`. The true
-effect for compliers is **0.5**. Crucially, the instrument is *not*
-unconditionally random: the probability of `rsncode = 1` rises with `age`
-and education, and those same variables shift the outcome.
+effect for compliers is **0.5**. Two things are deliberately wrong with
+the naive approaches: the treatment is genuinely endogenous (people who
+always take it have higher baseline outcomes), and the instrument is *not*
+unconditionally random (the probability of `rsncode = 1` rises with `age`
+and education, which also shift the outcome).
 
 ```{r}
 library(drlate)
@@ -151,12 +158,17 @@ summary(fit)
 Read the three rows bottom-up:
 
 * **ATE: Z on D** — the first stage: the instrument moves the treatment
-  probability by about 0.60 (the complier share). If this is tiny, you
-  have a weak instrument and the ratio is fragile.
+  probability by about 0.60 (the complier share).
 * **ATE: Z on Y** — the intent-to-treat effect of the instrument on the
   outcome.
 * **LATE: D on Y** — their ratio, the causal effect for compliers. The
   95% interval comfortably covers the true 0.5.
+
+The final line reports **first-stage strength**: with a single binary
+instrument, the squared z-statistic is the first-stage robust F. Here
+F ≈ 1084 — far above the conventional F = 10 danger threshold — so Wald
+inference on the ratio is trustworthy. Section 6 shows what the package
+does when it isn't.
 
 The standard errors here are not an afterthought: every estimation stage
 (the propensity score, both outcome regressions, both treatment
@@ -185,7 +197,57 @@ coef(drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
 Either way the estimate stays near 0.5: one correct model is enough.
 (Misspecify *both* and no estimator can save you.)
 
-## 4. Choosing models and options
+## 4. Checking the design: diagnostics
+
+Estimates deserve to be accompanied by evidence that the design behind
+them is sound. `plot()` provides the three standard displays.
+
+### Overlap
+
+IPW-type estimators divide by $\hat p(X)$ and $1-\hat p(X)$, so the
+estimated instrument propensity scores must stay away from 0 and 1.
+Healthy overlap looks like two well-mixed distributions:
+
+```{r overlap}
+plot(fit, type = "overlap")
+```
+
+`drlate()` refuses to estimate if any score breaches
+`[pstolerance, 1 - pstolerance]`; set `osample = TRUE` to get back an
+indicator of the violating observations instead, so you can inspect them
+before restricting the sample.
+
+### Covariate balance
+
+The whole point of weighting by the inverse propensity score is to make
+the instrument arms comparable on covariates. The love plot shows
+standardized mean differences before and after weighting — weighted dots
+inside the conventional ±0.1 band mean the propensity score model is
+doing its job:
+
+```{r balance}
+plot(fit, type = "balance")
+```
+
+The underlying numbers come from `balance()`:
+
+```{r}
+balance(fit)
+```
+
+Note how `age` moves from a 0.45 standardized difference to essentially
+zero after weighting.
+
+### Weight distributions
+
+A few enormous weights mean a few observations dominate the estimate —
+the classic symptom of thin overlap:
+
+```{r weights}
+plot(fit, type = "weights")
+```
+
+## 5. Choosing models and options
 
 ### Outcome and treatment families
 
@@ -195,8 +257,8 @@ of the IPWRA recommendation:
 
 ```{r}
 # Binary outcome: logit keeps fitted probabilities in [0, 1]
-drlate(hijob ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
-       data = drlate_sim, omodel = "logit")
+coef(drlate(hijob ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
+            data = drlate_sim, omodel = "logit"))
 
 # Positive outcome: Poisson (quasi-likelihood; no distributional claim)
 coef(drlate(kwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
@@ -223,25 +285,131 @@ coef(drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
 ### LATT: the effect for treated compliers
 
 `estimand = "latt"` reweights everything toward the treated population —
-"among those who took the treatment, what did it do?" — identified under
-somewhat weaker conditions on the instrument:
+"among those who took the treatment, what did it do?":
 
 ```{r}
 coef(drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
             data = drlate_sim, estimand = "latt"))
 ```
 
-### Overlap: the assumption you can check
+Weights (`weights =`) and clustered standard errors (`cluster =`) are
+available everywhere.
 
-IPW-type estimators divide by $\hat p(X)$ and $1-\hat p(X)$, so estimated
-propensity scores at 0 or 1 are fatal. `drlate()` refuses to estimate if
-any score falls outside `[pstolerance, 1 - pstolerance]`; set
-`osample = TRUE` to get back a logical vector marking the violating
-observations so you can inspect them and decide how to restrict the
-sample. Weights (`weights =`) and clustered standard errors
-(`cluster =`) are available everywhere.
+## 6. When the instrument is weak: Fieller confidence sets
 
-## 5. Coming from Stata
+The LATE is a ratio, and ratios with imprecise denominators behave badly:
+the usual (delta-method) confidence interval can have far-from-nominal
+coverage when the first stage is weak. The package watches for this —
+whenever the first-stage F drops below 10, the printout flags it and
+shows a **Fieller confidence set** alongside.
+
+The Fieller set inverts the test of $H_0:\ \text{num} - t \cdot
+\text{denom} = 0$ using the *joint* covariance of the numerator and the
+denominator (which the stacked moment system provides). Unlike the Wald
+interval, it keeps its promised coverage no matter how weak the
+instrument — at the honest price that it may be **unbounded** when the
+data barely identify the ratio.
+
+Watch it engage on a deliberately broken design (instrument shuffled at
+random in a small subsample, so the true first stage is zero):
+
+```{r}
+set.seed(42)
+d_weak <- drlate_sim[1:300, ]
+d_weak$zweak <- sample(d_weak$rsncode)
+fit_weak <- drlate(lwage ~ age, nvstat ~ age, zweak ~ age, data = d_weak)
+print(fit_weak)
+```
+
+The Fieller set is available on demand for any fit:
+
+```{r}
+confint(fit, method = "fieller")     # strong instrument: ~ Wald interval
+```
+
+In the package's Monte Carlo validation, at first-stage F ≈ 2.5 the
+Fieller set covered the true LATE 95.5% of the time (reporting an
+unbounded set in two-thirds of replications — the statistically honest
+answer) while the Wald interval degenerated. See the validation report on
+the package website.
+
+## 7. Bootstrap inference
+
+The paper notes that inference is straightforward "both analytically and
+using the nonparametric bootstrap." The analytic sandwich is the default;
+the bootstrap re-runs the entire estimation pipeline (including the
+propensity score) on each resample:
+
+```{r}
+fit_boot <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+                   rsncode ~ age + educ, data = drlate_sim,
+                   vcov = "bootstrap", boot_reps = 199, boot_seed = 42)
+summary(fit_boot)
+```
+
+Point estimates are unchanged; standard errors and the confidence
+intervals (now percentile intervals from the bootstrap distribution) come
+from the resamples. When `cluster` is supplied, whole clusters are
+resampled. Draws that fail — degenerate resamples, overlap violations —
+are dropped and counted; a non-trivial failure rate is itself a sign of
+weak identification, in which case prefer the Fieller set.
+
+## 8. How much does the estimator choice matter?
+
+Referees routinely ask for this table. One call runs all four estimators:
+
+```{r compare}
+cmp <- drlate_compare(lwage ~ age + educ, nvstat ~ age + educ,
+                      rsncode ~ age + educ, data = drlate_sim)
+cmp
+plot(cmp)
+```
+
+A caveat printed in the documentation bears repeating: IPW carries no
+outcome/treatment regressions and RA no propensity score, so those rows
+necessarily use reduced specifications — the IPWRA-vs-AIPW pair is the
+like-for-like doubly robust comparison. Here all four agree closely,
+which is what a healthy design looks like.
+
+## 9. Do you even need the instrument? The DR Hausman test
+
+The paper's Section 5 proposes a specification test that the Stata
+package does not implement. The logic: under **one-sided noncompliance**
+(nobody gets the treatment without the instrument), the LATT estimated
+*through the instrument* and the ATT estimated *assuming the treatment is
+unconfounded given $X$* target the same parameter — if unconfoundedness
+holds. So a significant difference between the two doubly robust
+estimates is evidence against unconfoundedness. Unlike the textbook
+OLS-vs-IV Hausman test, this comparison survives heterogeneous treatment
+effects.
+
+The simulated data are built with confounded treatment (always-takers
+have higher baseline wages), so after imposing one-sided noncompliance
+the test should — and does — reject:
+
+```{r}
+d_os <- drlate_sim
+d_os$nvstat[d_os$rsncode == 0] <- 0L   # impose one-sided noncompliance
+
+dr_hausman(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
+           data = d_os)
+```
+
+The unconfoundedness-based ATT (≈ 0.63) is biased upward by exactly the
+selection the DGP builds in, while the instrument-based LATT (≈ 0.38 in
+this one-sided subpopulation) is protected; the difference is six
+standard errors from zero. In practice: a rejection says you really did
+need the instrument; a non-rejection says the controls may suffice — and
+the much more precise unconfoundedness-based estimator becomes
+defensible.
+
+The standard error of the difference is analytic: both estimators' moment
+conditions are stacked into one system so their correlation is accounted
+for — the construction the paper sketches and this package carries out.
+(In Monte Carlo under a true null the test rejects at 4.7% for a nominal
+5% level.)
+
+## 10. Coming from Stata
 
 | Stata | R |
 |---|---|
@@ -253,6 +421,7 @@ sample. Weights (`weights =`) and clustered standard errors
 | `[pw = w]` | `weights = "w"` |
 | `, vce(cluster id)` | `cluster = "id"` |
 | `i.educ` factor syntax | a `factor()` column in the formula |
+| — | `plot()`, `balance()`, `confint(method = "fieller")`, `vcov = "bootstrap"`, `dr_hausman()`, `drlate_compare()` (R only) |
 
 Point estimates and standard errors agree with the Stata package to
 numerical precision; the package's test suite enforces this against
@@ -268,6 +437,11 @@ file.
   of Local Average Treatment Effects." *Econometrica* 62(2), 467–475.
 * Abadie, A. (2003). "Semiparametric Instrumental Variable Estimation of
   Treatment Response Models." *Journal of Econometrics* 113(2), 231–263.
+* Donald, S. G., Y.-C. Hsu, and R. P. Lieli (2014). "Testing the
+  Unconfoundedness Assumption via Inverse Probability Weighted Estimators
+  of (L)ATT." *Journal of Business & Economic Statistics* 32(3), 395–415.
+* Fieller, E. C. (1954). "Some Problems in Interval Estimation." *JRSS-B*
+  16(2), 175–185.
 * Graham, B. S., C. C. de Xavier Pinto, and D. Egel (2012). "Inverse
   Probability Tilting for Moment Condition Models with Missing Data."
   *Review of Economic Studies* 79(3), 1053–1079.
