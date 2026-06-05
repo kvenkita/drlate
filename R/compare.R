@@ -7,6 +7,15 @@
 #' covariates and `method = "ra"` drops the instrument covariates (each
 #' with a message), matching the requirements of those estimators.
 #'
+#' @details
+#' Because IPW carries no outcome/treatment regressions and RA carries no
+#' instrument propensity score, the automatic formula adjustment means
+#' the rows do not share a single adjustment specification: differences
+#' between the IPW or RA row and the doubly robust rows reflect both the
+#' estimator *and* the reduced specification. Read the comparison as a
+#' robustness display, not as a test that isolates estimator choice; the
+#' doubly robust rows (IPWRA, AIPW) are the like-for-like pair.
+#'
 #' @inheritParams drlate
 #' @param methods Estimators to run.
 #' @param both_norms Logical; also run the unnormalized variants of
@@ -75,6 +84,9 @@ drlate_compare <- function(outcome, treatment, instrument, data,
   })
 
   out <- do.call(rbind, rows)
+  # The normalize-check can switch a requested normalized fit to
+  # unnormalized (e.g. with IPT weights); drop the resulting duplicates.
+  out <- out[!duplicated(out[, c("method", "normalized")]), , drop = FALSE]
   rownames(out) <- NULL
   class(out) <- c("drlate_compare", "data.frame")
   attr(out, "estimand") <- list(...)$estimand %||% "late"

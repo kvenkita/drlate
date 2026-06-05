@@ -51,6 +51,12 @@ drlate_boot <- function(ctx, reps, seed = NULL, cores = 1L, level = 0.95) {
   } else {
     units <- unique(ctx$cluster)
     unit_rows <- split(seq_len(ctx$n), ctx$cluster)[as.character(units)]
+    if (length(units) < 30L) {
+      warning("cluster bootstrap with only ", length(units), " clusters: ",
+              "the resampling distribution is coarse and percentile ",
+              "intervals may be unreliable; consider the analytic ",
+              "cluster-robust variance instead.", call. = FALSE)
+    }
   }
 
   if (!is.null(seed)) {

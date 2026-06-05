@@ -291,7 +291,16 @@ latt_aipw <- function(ctx, ps) {
   pred_d0 <- pred_fun(ctx, "d0", ctx$tmodel, ctx$Xt, a0$degenerate_value)
 
   if (ctx$statnorm == "unnrm") {
-    w1s <- mean(z)                      # unweighted (Stata line 431)
+    # DELIBERATE DIVERGENCE from Stata drlate 1.0.0, which computes the
+    # treated share UNWEIGHTED here (drlate_estimate_latt.ado line 431).
+    # Under sampling weights that leaves the w1 moment (z - w1) nonzero at
+    # the reported value once the sandwich weights all moments by w,
+    # invalidating the joint variance. We use the weighted share, which
+    # coincides exactly with Stata when weights are uniform (every
+    # validated configuration) and yields a self-consistent moment system
+    # under pweights. The LATT point estimate is invariant either way
+    # (num and denom share the 1/w1 scaling).
+    w1s <- wmean(z, w)
     num1s <- wmean((z / w1s) * y, w)
     num0s <- wmean(attw_raw * (y - mu_y0) / w1s, w) +
              wmean(z * mu_y0 / w1s, w)

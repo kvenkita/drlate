@@ -121,7 +121,7 @@ plot_weights <- function(x, bins) {
                                           "Z = 1" = "#2c6e8f"),
                                guide = "none") +
     ggplot2::labs(
-      x = "Implied IPW weight", y = "Count",
+      x = "Inverse-propensity weight component", y = "Count",
       title = "Distribution of implied weights",
       subtitle = "Dotted line marks the 99th percentile; long tails mean a few observations dominate"
     ) +

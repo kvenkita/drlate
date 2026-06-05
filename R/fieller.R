@@ -23,10 +23,29 @@ fieller_ci <- function(num, denom, V2, level = 0.95) {
   cc <- num^2 - q * vnn
   disc <- b^2 - 4 * a * cc
 
+  # Degenerate-quadratic regime (denom^2 == q * vdd within rounding):
+  # the inequality is linear, b*t + c <= 0, giving a half-line.
+  if (abs(a) <= 1e-12 * max(denom^2, q * vdd)) {
+    if (b == 0) {
+      return(list(lower = -Inf, upper = Inf, type = "whole-line",
+                  level = level))
+    }
+    r <- -cc / b
+    out <- if (b > 0) list(lower = -Inf, upper = r)
+           else list(lower = r, upper = Inf)
+    return(c(out, list(type = "bounded", level = level)))
+  }
+
   if (disc <= 0) {
-    # No real roots: the inequality holds everywhere (a < 0) or nowhere;
-    # "nowhere" cannot occur at the point estimate (t = num/denom always
-    # satisfies it), so the set is the whole line.
+    if (a > 0) {
+      # An upward parabola with no (or one tangent) real root: the set is
+      # at most the single tangency point. Because the point estimate
+      # always satisfies the inequality (V2 is PSD), an empty set is
+      # impossible; report the degenerate single-point interval.
+      v <- -b / (2 * a)
+      return(list(lower = v, upper = v, type = "bounded", level = level))
+    }
+    # a < 0 with no real roots: the inequality holds everywhere.
     return(list(lower = -Inf, upper = Inf, type = "whole-line",
                 level = level))
   }
@@ -43,10 +62,18 @@ fieller_ci <- function(num, denom, V2, level = 0.95) {
 #' @noRd
 format_fieller <- function(f, digits = 4) {
   fmt <- function(v) format(v, digits = digits)
+  br <- function(v, side) {
+    if (is.infinite(v)) {
+      if (side == "l") "(-Inf" else "Inf)"
+    } else {
+      if (side == "l") paste0("[", fmt(v)) else paste0(fmt(v), "]")
+    }
+  }
   switch(f$type,
-    bounded    = paste0("[", fmt(f$lower), ", ", fmt(f$upper), "]"),
-    complement = paste0("(-Inf, ", fmt(f$lower), "] U [",
-                        fmt(f$upper), ", Inf)"),
+    bounded    = paste0(br(f$lower, "l"), ", ", br(f$upper, "r")),
+    complement = paste0("(-Inf, ", fmt(f$lower), "] U [", fmt(f$upper),
+                        ", Inf)  [values strictly between the endpoints ",
+                        "are rejected; the set is unbounded]"),
     `whole-line` = "(-Inf, Inf) - the first stage is uninformative"
   )
 }

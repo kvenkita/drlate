@@ -48,10 +48,16 @@
 #'   replicating the Stata package, or `"bootstrap"` for nonparametric
 #'   bootstrap standard errors and percentile confidence intervals (whole
 #'   clusters are resampled when `cluster` is supplied). The analytic
-#'   variance is always computed and stored either way.
+#'   variance is always computed and stored either way. Draws that fail
+#'   (degenerate resamples, non-convergence, overlap violations) are
+#'   dropped and counted; because such failures concentrate where
+#'   identification is weak, a non-trivial failure rate is itself a sign
+#'   that percentile intervals are unreliable and the Fieller set
+#'   (`confint(., method = "fieller")`) should be preferred.
 #' @param boot_reps Number of bootstrap replications (default 999).
-#' @param boot_seed Optional seed for reproducible bootstrap draws (uses
-#'   L'Ecuyer streams, so results are reproducible across `cores`).
+#' @param boot_seed Optional seed for reproducible bootstrap draws.
+#'   Results are reproducible for a fixed number of `cores`; serial and
+#'   parallel runs use different (both valid) random streams.
 #' @param cores Number of CPU cores for the bootstrap (default 1). Values
 #'   above 1 use a PSOCK cluster and require the package to be installed
 #'   (not merely loaded with `devtools::load_all()`).

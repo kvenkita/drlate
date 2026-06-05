@@ -78,6 +78,12 @@ imputed counterfactual. The standard error of the difference comes from
 stacking the moment conditions of \emph{both} estimators (and the difference)
 into one M-estimation system, so the covariance between them is
 accounted for analytically — the analytic option suggested in the paper.
+
+Note that the two halves adjust on their respective formulas: the LATT
+half's propensity score uses the \emph{instrument}-equation covariates,
+while the ATT half's uses the \emph{treatment}-equation covariates (both
+share the outcome model). Supply the same covariate set to all three
+formulas unless you intend them to differ.
 }
 \examples{
 d <- drlate_sim

@@ -47,6 +47,15 @@ handled automatically: \code{method = "ipw"} drops the outcome/treatment
 covariates and \code{method = "ra"} drops the instrument covariates (each
 with a message), matching the requirements of those estimators.
 }
+\details{
+Because IPW carries no outcome/treatment regressions and RA carries no
+instrument propensity score, the automatic formula adjustment means
+the rows do not share a single adjustment specification: differences
+between the IPW or RA row and the doubly robust rows reflect both the
+estimator \emph{and} the reduced specification. Read the comparison as a
+robustness display, not as a test that isolates estimator choice; the
+doubly robust rows (IPWRA, AIPW) are the like-for-like pair.
+}
 \examples{
 cmp <- drlate_compare(lwage ~ age + educ, nvstat ~ age + educ,
                       rsncode ~ age + educ, data = drlate_sim)

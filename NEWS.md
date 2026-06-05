@@ -1,3 +1,31 @@
+# drlate 0.1.0 (patch: peer-review fixes)
+
+Changes from an internal econometric peer review (Monte Carlo evidence in
+`data-raw/mc-review.R` and `data-raw/mc-weak2.R`):
+
+* **Correctness (deliberate divergence from Stata 1.0.0):** the
+  unnormalized LATT-AIPW estimator now computes the treated share with
+  sampling weights. Stata uses an unweighted mean there, which leaves its
+  `w1` moment condition nonzero under pweights and invalidates the joint
+  variance; with uniform weights the two coincide exactly (all validated
+  configurations are unaffected).
+* Fieller sets handle the degenerate-quadratic regimes explicitly
+  (half-line when `denom^2 = q * V_dd`, single-point tangency) instead of
+  collapsing them into "whole line", and the complement-set print states
+  that the set is unbounded.
+* The weak-instrument advisory now triggers at first-stage `F < 10`
+  (`|z| < 3.16`) instead of `|z| < 2`, and the printout reports
+  `z^2 ~ F`.
+* Cluster bootstrap warns when there are fewer than 30 clusters;
+  documentation notes that failed bootstrap draws concentrate where
+  identification is weak (prefer the Fieller set in that regime) and that
+  seeded results are reproducible per fixed number of cores.
+* `drlate_compare()` documents that IPW/RA rows use reduced adjustment
+  sets (estimator and specification change together) and de-duplicates
+  rows after normalization auto-switching.
+* `dr_hausman()` documents that the LATT and ATT halves adjust on the
+  instrument- and treatment-equation covariates respectively.
+
 # drlate 0.1.0
 
 Extensions beyond the Stata original:

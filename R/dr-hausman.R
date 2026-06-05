@@ -22,6 +22,12 @@
 #' into one M-estimation system, so the covariance between them is
 #' accounted for analytically — the analytic option suggested in the paper.
 #'
+#' Note that the two halves adjust on their respective formulas: the LATT
+#' half's propensity score uses the *instrument*-equation covariates,
+#' while the ATT half's uses the *treatment*-equation covariates (both
+#' share the outcome model). Supply the same covariate set to all three
+#' formulas unless you intend them to differ.
+#'
 #' @inheritParams drlate
 #' @param ivmodel Instrument propensity score model for the LATT half:
 #'   `"logit"` (default) or `"ipt"`.

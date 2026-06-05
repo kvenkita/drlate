@@ -36,11 +36,16 @@ print.drlate <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   print(coeftable(x), digits = digits)
 
   fz <- firststage_z(x)
-  cat("\nFirst stage (Z on D): z = ", format(fz, digits = 4), sep = "")
-  if (is.finite(fz) && abs(fz) < 2) {
-    cat("  [weak: the LATE ratio may be unstable]")
+  # With a single binary instrument, z^2 is the first-stage robust F;
+  # flag below the conventional F = 10 (|z| ~ 3.16) and show the
+  # weak-instrument-robust Fieller set alongside the Wald interval.
+  cat("\nFirst stage (Z on D): z = ", format(fz, digits = 4),
+      " (z^2 ~ first-stage F = ", format(fz^2, digits = 3), ")",
+      sep = "")
+  if (is.finite(fz) && fz^2 < 10) {
+    cat("  [weak: Wald inference on the ratio may be unreliable]")
     f <- fieller_from_fit(x)
-    cat("\nFieller 95% confidence set for the LATE: ",
+    cat("\nFieller 95% confidence set for the ", x$estimand, ": ",
         format_fieller(f, digits = max(4L, digits)), sep = "")
   }
   cat("\n")
