@@ -82,7 +82,7 @@ fit <- drlate(lwage ~ age + educ,      # outcome model
 summary(fit)
 ```
 
-The three reported quantities mirror the Stata package: the causal estimate
+The three reported quantities mirror the Stata package's output: the causal estimate
 (LATE), the intent-to-treat effect of the instrument on the outcome
 (numerator), and the first-stage effect of the instrument on the treatment
 (denominator), with the LATE formed as their ratio.
@@ -148,8 +148,8 @@ plot(fit, type = "overlap")
 ## Inference beyond the default sandwich
 
 Every printout reports the first-stage z (with z² ≈ F for a single binary
-instrument) and flags weakness below F = 10. Two additional inference
-tools are available:
+instrument) and flags weakness below F = 10. The package adds two
+inference tools:
 
 ```{r}
 # Weak-instrument-robust Fieller confidence set (may be unbounded when
@@ -168,9 +168,9 @@ confint(fit_b)
 
 Under one-sided noncompliance (nobody takes the treatment without the
 instrument), the instrument-based LATT equals the unconfoundedness-based
-ATT if treatment assignment is unconfounded given the covariates —
-Section 5 of the paper turns this into a heterogeneity-robust Hausman
-test, implemented here (it is not available in the Stata package):
+ATT if treatment assignment is unconfounded given the covariates.
+Section 5 of the paper turns this equality into a heterogeneity-robust
+Hausman test, implemented here; the Stata package does not provide it:
 
 ```{r}
 d_os <- drlate_sim
@@ -179,7 +179,8 @@ dr_hausman(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
            data = d_os)
 ```
 
-The simulated treatment is genuinely confounded, and the test rejects.
+The simulated treatment is confounded by construction, and the test
+rejects.
 
 ## Comparing estimators
 

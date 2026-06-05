@@ -20,8 +20,8 @@ This primer explains, with as little formalism as possible, what the
 estimators in `drlate` do and when you would want them. It is a companion to
 Słoczyński, Uysal, and Wooldridge (2022), *"Doubly Robust Estimation of
 Local Average Treatment Effects Using Inverse Probability Weighted
-Regression Adjustment"* (arXiv:2208.01300), whose method this package — like
-the original Stata command of the same name — implements. Along the way it
+Regression Adjustment"* (arXiv:2208.01300). Like the original Stata command
+of the same name, this package implements the paper's method. Along the way it
 demonstrates every tool in the package: estimation, diagnostics,
 weak-instrument-robust inference, the bootstrap, the estimator comparison,
 and the doubly robust Hausman test.
@@ -70,7 +70,7 @@ subject of the paper and this package.
 
 ## 2. The four estimators in one picture
 
-Every estimator in `drlate` builds the same ratio; they differ only in how
+All four estimators in `drlate` build the same ratio; they differ only in how
 each piece is adjusted for $X$. Each piece is an "effect of $Z$ on
 something" — a problem formally identical to estimating an average
 treatment effect of $Z$ under unconfoundedness — so the familiar
@@ -94,9 +94,8 @@ sum can wander outside the logical range of the outcome — a predicted
 probability of 1.3, a negative count. IPWRA achieves it by *reweighting a
 quasi-likelihood regression*, so as long as you choose a sensible family
 (logit for binary outcomes, Poisson for counts), fitted values stay in
-range by construction. This is why IPWRA has the appealing small-sample
-behavior documented in the paper's simulations, and why
-`method = "ipwra"` is the default.
+range by construction. Hence IPWRA's appealing small-sample behavior in
+the paper's simulations — and its place as the package default.
 
 A second practical lesson from the paper concerns **normalization**. Raw
 IPW weights $Z_i/\hat p(X_i)$ need not average to one in a sample; if a few
@@ -111,8 +110,8 @@ normalized by construction.
 `drlate_sim` is a simulated dataset built so that the truth is known: a
 binary instrument `rsncode`, a binary treatment `nvstat` with two-sided
 noncompliance (60% compliers), and a continuous outcome `lwage`. The true
-effect for compliers is **0.5**. Two things are deliberately wrong with
-the naive approaches: the treatment is genuinely endogenous (people who
+effect for compliers is **0.5**. The design plants two traps for
+the naive approaches: the treatment is endogenous (people who
 always take it have higher baseline outcomes), and the instrument is *not*
 unconditionally random (the probability of `rsncode = 1` rises with `age`
 and education, which also shift the outcome).
@@ -173,7 +172,7 @@ does when it isn't.
 The standard errors here are not an afterthought: every estimation stage
 (the propensity score, both outcome regressions, both treatment
 regressions, and the ratio itself) is stacked into one moment system and a
-joint sandwich variance is computed — the uncertainty from estimating the
+joint sandwich variance is computed. The uncertainty from estimating the
 propensity score propagates into the LATE's standard error, exactly as in
 the Stata original.
 
@@ -199,8 +198,8 @@ Either way the estimate stays near 0.5: one correct model is enough.
 
 ## 4. Checking the design: diagnostics
 
-Estimates deserve to be accompanied by evidence that the design behind
-them is sound. `plot()` provides the three standard displays.
+An estimate deserves evidence that the design behind it is sound.
+`plot()` provides the three standard displays.
 
 ### Overlap
 
@@ -235,8 +234,8 @@ The underlying numbers come from `balance()`:
 balance(fit)
 ```
 
-Note how `age` moves from a 0.45 standardized difference to essentially
-zero after weighting.
+`age` moves from a standardized difference of 0.45 to nearly zero after
+weighting.
 
 ### Weight distributions
 
@@ -306,9 +305,9 @@ shows a **Fieller confidence set** alongside.
 The Fieller set inverts the test of $H_0:\ \text{num} - t \cdot
 \text{denom} = 0$ using the *joint* covariance of the numerator and the
 denominator (which the stacked moment system provides). Unlike the Wald
-interval, it keeps its promised coverage no matter how weak the
-instrument — at the honest price that it may be **unbounded** when the
-data barely identify the ratio.
+interval, it keeps its promised asymptotic coverage no matter how weak
+the instrument — at the honest price that it may be **unbounded** when
+the data barely identify the ratio.
 
 Watch it engage on a deliberately broken design (instrument shuffled at
 random in a small subsample, so the true first stage is zero):
@@ -398,10 +397,10 @@ dr_hausman(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
 The unconfoundedness-based ATT (≈ 0.63) is biased upward by exactly the
 selection the DGP builds in, while the instrument-based LATT (≈ 0.38 in
 this one-sided subpopulation) is protected; the difference is six
-standard errors from zero. In practice: a rejection says you really did
-need the instrument; a non-rejection says the controls may suffice — and
-the much more precise unconfoundedness-based estimator becomes
-defensible.
+standard errors from zero. In practice: a rejection says the controls
+alone do not suffice — you needed the instrument; a non-rejection says
+the controls may suffice, and the much more precise
+unconfoundedness-based estimator becomes defensible.
 
 The standard error of the difference is analytic: both estimators' moment
 conditions are stacked into one system so their correlation is accounted

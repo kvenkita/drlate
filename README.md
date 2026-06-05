@@ -10,8 +10,9 @@ by S. Derya Uysal, Tymon Słoczyński, and Jeffrey M. Wooldridge: point
 estimates come from the same sequential weighted regressions, and standard
 errors are computed jointly for the instrument propensity score, the outcome
 regression, the treatment regression, and the causal estimand by stacking
-all moment conditions into a single M-estimation sandwich — the R equivalent
-of the original's `gmm, onestep iterate(0)` construction. The test suite
+all moment conditions into a single M-estimation system and computing its
+sandwich variance. This is the R equivalent of the original's
+`gmm, onestep iterate(0)` construction. The test suite
 verifies numerical equivalence against Stata-generated fixtures (estimates
 to ~1e-9, standard errors to ~1e-6, across 33 scenarios).
 
