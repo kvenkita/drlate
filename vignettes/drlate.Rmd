@@ -50,8 +50,8 @@ Beyond the Stata original, the package adds:
   stacked moment system.
 * **Estimator comparison**: `drlate_compare()` with a dot-whisker plot.
 
-All extensions are validated by Monte Carlo; see the *Validation report
-and peer review* article on the package website.
+All extensions are validated by Monte Carlo (scripts in `data-raw/` of
+the source repository).
 
 ### Joint inference
 

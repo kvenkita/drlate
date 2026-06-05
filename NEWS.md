@@ -1,6 +1,6 @@
-# drlate 0.1.0 (patch: peer-review fixes)
+# drlate 0.1.0 (patch)
 
-Changes from an internal econometric peer review (Monte Carlo evidence in
+Changes from an internal econometric audit (Monte Carlo evidence in
 `data-raw/mc-review.R` and `data-raw/mc-weak2.R`):
 
 * **Correctness (deliberate divergence from Stata 1.0.0):** the

@@ -329,8 +329,7 @@ confint(fit, method = "fieller")     # strong instrument: ~ Wald interval
 In the package's Monte Carlo validation, at first-stage F ≈ 2.5 the
 Fieller set covered the true LATE 95.5% of the time (reporting an
 unbounded set in two-thirds of replications — the statistically honest
-answer) while the Wald interval degenerated. See the validation report on
-the package website.
+answer) while the Wald interval degenerated.
 
 ## 7. Bootstrap inference
 

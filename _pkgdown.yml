@@ -28,8 +28,6 @@ navbar:
       menu:
         - text: "Package overview and Stata replication"
           href: articles/drlate.html
-        - text: "Validation report and peer review"
-          href: articles/validation-review.html
 
 reference:
 - title: Estimation

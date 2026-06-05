@@ -1,4 +1,4 @@
-# Monte Carlo evidence for the peer review of the added features.
+# Monte Carlo validation of the added features.
 # (Dev script, not part of the package build.)
 setwd("C:/Users/kyle/Documents/Projects/Personal/drlate")
 devtools::load_all(quiet = TRUE)

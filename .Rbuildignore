@@ -6,7 +6,6 @@
 ^\.gitignore$
 ^LICENSE\.md$
 ^tests/testthat/fixtures/sipp.*$
-^vignettes/articles$
 ^_pkgdown\.yml$
 ^\.github$
 ^docs$
