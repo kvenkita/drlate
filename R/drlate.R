@@ -141,11 +141,18 @@ drlate <- function(outcome, treatment, instrument, data,
   } else {
     c("LATT: D on Y", "ATT: Z on Y", "ATT: Z on D")
   }
-  idx <- c(sys$layout$late, sys$layout$num, sys$layout$denom)
-  b3 <- stats::setNames(sys$theta0[idx], labels)
-  # Stata reports a diagonal 3x3 V (drlate_estimate.ado section 10)
-  V3 <- diag(diag(V[idx, idx, drop = FALSE]), nrow = 3L)
-  dimnames(V3) <- list(labels, labels)
+  if (is.null(sys$layout$num) || is.null(sys$layout$denom)) {
+    # kappa10: a difference of two ratios — only the LATE is reported
+    b3 <- stats::setNames(sys$theta0[sys$layout$late], labels[1])
+    V3 <- matrix(V[sys$layout$late, sys$layout$late], 1L, 1L,
+                 dimnames = list(labels[1], labels[1]))
+  } else {
+    idx <- c(sys$layout$late, sys$layout$num, sys$layout$denom)
+    b3 <- stats::setNames(sys$theta0[idx], labels)
+    # Stata reports a diagonal 3x3 V (drlate_estimate.ado section 10)
+    V3 <- diag(diag(V[idx, idx, drop = FALSE]), nrow = 3L)
+    dimnames(V3) <- list(labels, labels)
+  }
 
   boot <- NULL
   if (vcov == "bootstrap") {

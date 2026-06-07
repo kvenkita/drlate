@@ -214,6 +214,19 @@ make_late_block <- function(ctx, start) {
     })
 }
 
+#' The difference of two ratios: late - (num1/denom1 - num0/denom0)
+#' (normalized Abadie kappa, kappalate tau_a,10)
+#' @noRd
+make_late_diff_block <- function(ctx, start) {
+  n <- ctx$n
+  new_block("late", "late", start,
+    function(theta, layout) {
+      cbind(rep(theta[layout$late] -
+                  (theta[layout$num1] / theta[layout$denom1] -
+                   theta[layout$num0] / theta[layout$denom0]), n))
+    })
+}
+
 # ---------------------------------------------------------------------------
 # Assembler
 # ---------------------------------------------------------------------------

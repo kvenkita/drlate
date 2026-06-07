@@ -20,7 +20,7 @@ test_that("kappa works with ivmodel = cbps", {
   expect_true(all(is.finite(sqrt(diag(fit$vcov3)))))
 })
 
-test_that("kappa0 (tau_a,0) equals its closed form; system valid", {
+test_that("kappa0 (tau_a,0) equals its closed form; system square, moments zero", {
   d <- drlate_sim
   fit <- expect_valid_system(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, d,
                              method = "kappa0")
@@ -48,6 +48,10 @@ test_that("kappa methods validate inputs", {
     "ipt.*not available")
   expect_error(
     drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, data = d,
+           method = "kappa0", estimand = "latt"),
+    "estimand = \"late\" only")
+  expect_error(
+    drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, data = d,
            method = "kappa10", ivmodel = "cbps"),
     "cbps.*only with method = \"kappa\"")
   expect_error(
@@ -60,4 +64,20 @@ test_that("kappa methods validate inputs", {
     drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, data = d2,
            method = "kappa", tmodel = "linear"),
     "binary")
+})
+
+test_that("kappa10 (tau_a,10) equals its closed form; one reported coef", {
+  d <- drlate_sim
+  fit <- expect_valid_system(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, d,
+                             method = "kappa10")
+  ps <- fitted(glm(rsncode ~ age + educ, binomial, data = d))
+  z <- d$rsncode; dd <- d$nvstat; y <- d$lwage
+  kap1 <- z / ps - (1 - z) / (1 - ps)
+  tau <- mean(dd * kap1 * y) / mean(dd * kap1) -
+         mean((dd - 1) * kap1 * y) / mean((dd - 1) * kap1)
+  expect_length(coef(fit), 1L)
+  expect_named(coef(fit), "LATE: D on Y")
+  expect_equal(unname(coef(fit)), tau, tolerance = 1e-8)
+  expect_equal(dim(fit$vcov3), c(1L, 1L))
+  expect_true(is.finite(sqrt(fit$vcov3[1, 1])))
 })
