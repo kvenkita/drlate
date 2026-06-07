@@ -468,7 +468,7 @@ late_aipw <- function(ctx, ps) {
        estimates = c(late = late, num = num, denom = denom))
 }
 
-#' Shared kappa numerator block: delta = E[ZY/p - (1-Z)Y/(1-p)]
+#' Shared kappa numerator block: delta = E(ZY/p - (1-Z)Y/(1-p))
 #' (kappalate eq_delta), expressed through the PS linear index.
 #' @noRd
 make_kappa_num_block <- function(ctx, setup, start) {

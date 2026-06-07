@@ -460,7 +460,7 @@ difference of two ratios, so use the bootstrap there).
 * Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2022). "Doubly Robust
   Estimation of Local Average Treatment Effects Using Inverse Probability
   Weighted Regression Adjustment." arXiv:2208.01300.
-* Słoczyński, T., Uysal, S. D., & Wooldridge, J. M. (2025). "Abadie's
+* Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2025). "Abadie's
   Kappa and Weighting Estimators of the Local Average Treatment Effect."
   *Journal of Business & Economic Statistics* 43(1), 164–177.
 * Imbens, G. W., and J. D. Angrist (1994). "Identification and Estimation
