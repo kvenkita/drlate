@@ -136,3 +136,20 @@ test_that("drlate_compare accepts the kappa methods", {
   expect_true(all(is.finite(cmp$estimate)))
   expect_true(all(is.finite(cmp$se)))
 })
+
+test_that("kappa methods accept sampling weights and cluster", {
+  d <- drlate_sim
+  d$wt <- 1 + (seq_len(nrow(d)) %% 3) / 10
+  d$cl <- rep_len(1:50, nrow(d))
+  for (m in c("kappa", "kappa0", "kappa10")) {
+    f <- drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, data = d,
+                method = m, weights = "wt", cluster = "cl")
+    expect_true(all(is.finite(coef(f))))
+    expect_true(all(is.finite(sqrt(diag(f$vcov3)))))
+    expect_identical(f$N_clust, 50L)
+    # weights actually move the estimate
+    f0 <- drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, data = d,
+                 method = m)
+    expect_false(isTRUE(all.equal(coef(f)[[1]], coef(f0)[[1]])))
+  }
+})
