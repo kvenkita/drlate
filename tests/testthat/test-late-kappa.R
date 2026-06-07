@@ -1,6 +1,25 @@
 # Kappa-weighting estimators (Sloczynski, Uysal & Wooldridge 2025, JBES;
 # Stata kappalate): tau_a, tau_a,0, tau_a,10.
 
+test_that("kappa (tau_a) equals its closed form; system square, moments zero", {
+  d <- drlate_sim
+  fit <- expect_valid_system(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, d,
+                             method = "kappa")
+  ps <- fitted(glm(rsncode ~ age + educ, binomial, data = d))
+  z <- d$rsncode; dd <- d$nvstat; y <- d$lwage
+  delta <- mean(z * y / ps - (1 - z) * y / (1 - ps))
+  gam <- mean(1 - dd * (1 - z) / (1 - ps) - (1 - dd) * z / ps)
+  expect_equal(unname(coef(fit)), c(delta / gam, delta, gam),
+               tolerance = 1e-8)
+})
+
+test_that("kappa works with ivmodel = cbps", {
+  fit <- drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
+                data = drlate_sim, method = "kappa", ivmodel = "cbps")
+  expect_true(all(is.finite(coef(fit))))
+  expect_true(all(is.finite(sqrt(diag(fit$vcov3)))))
+})
+
 test_that("kappa methods validate inputs", {
   d <- drlate_sim
   expect_error(

@@ -13,6 +13,7 @@ estimate_late <- function(ctx, ps) {
     ra    = late_ra(ctx),
     ipw   = late_ipw(ctx, ps),
     aipw  = late_aipw(ctx, ps),
+    kappa  = late_kappa(ctx, ps),
     stop("method = \"", ctx$method, "\" is not implemented yet.",
          call. = FALSE)
   )
@@ -461,6 +462,43 @@ late_aipw <- function(ctx, ps) {
     blocks <- c(blocks, list(make_late_block(ctx, late)))
   }
 
+  list(blocks = blocks,
+       estimates = c(late = late, num = num, denom = denom))
+}
+
+#' Shared kappa numerator block: delta = E[ZY/p - (1-Z)Y/(1-p)]
+#' (kappalate eq_delta), expressed through the PS linear index.
+#' @noRd
+make_kappa_num_block <- function(ctx, setup, start) {
+  z <- ctx$z; y <- ctx$y
+  rw1 <- setup$rw1; rw0 <- setup$rw0
+  make_custom_block(ctx, "num", start, function(theta, layout)
+    z * rw1(theta, layout) * y - (1 - z) * rw0(theta, layout) * y -
+      theta[layout$num])
+}
+
+#' LATE via unnormalized Abadie kappa weighting (kappalate tau_a).
+#' Stata: kappalate.ado eq_delta + eq_gamma + eq_tau_a, gmm onestep
+#' iterate(0) — point estimates are closed-form means at the fitted PS,
+#' the stack exists only for the joint sandwich.
+#' @noRd
+late_kappa <- function(ctx, ps) {
+  w <- ctx$w; z <- ctx$z; y <- ctx$y; d <- ctx$d
+  setup <- late_ps_setup(ctx, ps)
+  rw1 <- setup$rw1; rw0 <- setup$rw0
+
+  num   <- wmean(ps$wt1 * y - ps$wt0 * y, w)
+  denom <- wmean(1 - d * (1 - z) / (1 - ps$ps) - (1 - d) * z / ps$ps, w)
+  late  <- num / denom
+
+  # Order: eqips, num (delta), denom (gamma), late — as in kappalate.ado
+  blocks <- c(setup$blocks, list(
+    make_kappa_num_block(ctx, setup, num),
+    make_custom_block(ctx, "denom", denom, function(theta, layout)
+      1 - d * (1 - z) * rw0(theta, layout) -
+        (1 - d) * z * rw1(theta, layout) - theta[layout$denom]),
+    make_late_block(ctx, late)
+  ))
   list(blocks = blocks,
        estimates = c(late = late, num = num, denom = denom))
 }
