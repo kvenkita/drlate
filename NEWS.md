@@ -1,4 +1,4 @@
-# drlate (development version)
+# drlate 0.2.0
 
 * New kappa-weighting estimators of the LATE from Słoczyński, Uysal, and
   Wooldridge (2025, *JBES* 43(1), 164-177): `method = "kappa"` (tau_a),

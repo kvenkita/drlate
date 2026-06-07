@@ -17,14 +17,18 @@ set.seed(1)
 ```
 
 This primer explains, with as little formalism as possible, what the
-estimators in `drlate` do and when you would want them. It is a companion to
-Słoczyński, Uysal, and Wooldridge (2022), *"Doubly Robust Estimation of
-Local Average Treatment Effects Using Inverse Probability Weighted
-Regression Adjustment"* (arXiv:2208.01300). Like the original Stata command
-of the same name, this package implements the paper's method. Along the way it
-demonstrates every tool in the package: estimation, diagnostics,
-weak-instrument-robust inference, the bootstrap, the estimator comparison,
-and the doubly robust Hausman test.
+estimators in `drlate` do and when you would want them. It is a companion
+to two papers by Słoczyński, Uysal, and Wooldridge: *"Doubly Robust
+Estimation of Local Average Treatment Effects Using Inverse Probability
+Weighted Regression Adjustment"* (2022, arXiv:2208.01300), whose
+estimators the authors' Stata command `drlate` implements, and *"Abadie's
+Kappa and Weighting Estimators of the Local Average Treatment Effect"*
+(2025, *JBES*), whose estimator menu their command `kappalate` implements.
+This package implements both papers behind one interface. Along the way
+the primer demonstrates every tool in the package: estimation, the
+weighting-estimator menu, diagnostics, weak-instrument-robust inference,
+the bootstrap, the estimator comparison, and the doubly robust Hausman
+test.
 
 ## 1. The problem: a treatment people choose
 
@@ -68,10 +72,13 @@ $X$** — and then both the numerator and the denominator above become
 covariate-adjusted contrasts. How exactly to adjust them is the entire
 subject of the paper and this package.
 
-## 2. The four estimators in one picture
+## 2. The four core estimators in one picture
 
-All four estimators in `drlate` build the same ratio; they differ only in how
-each piece is adjusted for $X$. Each piece is an "effect of $Z$ on
+All estimators in `drlate` build the same ratio; they differ only in how
+each piece is adjusted for $X$. This section covers the four
+regression-and-weighting strategies from the 2022 paper; a second family —
+the Abadie-kappa weighting menu from the 2025 paper — appears in
+Section 6. Each piece is an "effect of $Z$ on
 something" — a problem formally identical to estimating an average
 treatment effect of $Z$ under unconfoundedness — so the familiar
 treatment-effects toolbox applies:
@@ -166,7 +173,7 @@ Read the three rows bottom-up:
 The final line reports **first-stage strength**: with a single binary
 instrument, the squared z-statistic is the first-stage robust F. Here
 F ≈ 1084 — far above the conventional F = 10 danger threshold — so Wald
-inference on the ratio is trustworthy. Section 6 shows what the package
+inference on the ratio is trustworthy. Section 7 shows what the package
 does when it isn't.
 
 The standard errors here are not an afterthought: every estimation stage
@@ -294,7 +301,76 @@ coef(drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
 Weights (`weights =`) and clustered standard errors (`cluster =`) are
 available everywhere.
 
-## 6. When the instrument is weak: Fieller confidence sets
+## 6. Abadie's kappa: the weighting-estimator menu *(new in 0.2.0)*
+
+The companion paper Słoczyński, Uysal, and Wooldridge (2025) studies the
+family of pure weighting estimators of the LATE motivated by Abadie's
+(2003) kappa theorem. These use *only* the instrument propensity score —
+no outcome or treatment regressions — and differ in which kappa weights
+they use and whether the weights are normalized. `drlate` implements the
+full menu of the authors' Stata command `kappalate`:
+
+| `method` | kappalate name | Weighting |
+|---|---|---|
+| `"kappa"` | `tau_a` | unnormalized Abadie kappa |
+| `"ipw"`, `normalized = FALSE` | `tau_a,1` | unnormalized, treated-arm |
+| `"kappa0"` | `tau_a,0` | unnormalized, untreated-arm |
+| `"kappa10"` | `tau_a,10` | normalized Abadie kappa |
+| `"ipw"` (default normalized) | `tau_u` | normalized (Hájek) |
+
+Because the kappa methods carry no outcome or treatment model, the first
+two formulas must be intercept-only — and that makes the whole menu a
+genuinely like-for-like comparison (every row adjusts for covariates only
+through the instrument propensity score):
+
+```{r kappa-menu}
+cmp_w <- drlate_compare(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
+                        data = drlate_sim,
+                        methods = c("ipw", "kappa", "kappa0", "kappa10"))
+cmp_w
+```
+
+All four sit on top of each other here — a healthy design. The paper's
+main practical lesson is *which* of these to trust when they disagree:
+the **normalized** estimators (`tau_u`, i.e. `method = "ipw"`, and
+`tau_a,10`), because the unnormalized variants are sensitive to the
+location and scale of the outcome. You can see that sensitivity directly —
+shift the outcome by a constant, which should not change a treatment
+effect:
+
+```{r kappa-shift}
+d_shift <- transform(drlate_sim, lwage = lwage + 100)
+rbind(
+  kappa10 = c(original = coef(drlate(lwage ~ 1, nvstat ~ 1,
+                                     rsncode ~ age + educ,
+                                     data = drlate_sim,
+                                     method = "kappa10"))[[1]],
+              shifted = coef(drlate(lwage ~ 1, nvstat ~ 1,
+                                    rsncode ~ age + educ,
+                                    data = d_shift,
+                                    method = "kappa10"))[[1]]),
+  kappa   = c(original = coef(drlate(lwage ~ 1, nvstat ~ 1,
+                                     rsncode ~ age + educ,
+                                     data = drlate_sim,
+                                     method = "kappa"))[[1]],
+              shifted = coef(drlate(lwage ~ 1, nvstat ~ 1,
+                                    rsncode ~ age + educ,
+                                    data = d_shift,
+                                    method = "kappa"))[[1]])
+)
+```
+
+The normalized `kappa10` is exactly invariant; the unnormalized `kappa`
+moves. (The package prints each estimator's `kappalate` name so the
+mapping above is always visible in the output.)
+
+Unlike the Stata command, all of drlate's inference machinery applies to
+the kappa menu: cluster-robust standard errors, sampling weights, the
+bootstrap, and Fieller confidence sets for `"kappa"` and `"kappa0"`
+(`"kappa10"` is a difference of two ratios, for which no Fieller pivot
+exists — use the bootstrap there).
+
+## 7. When the instrument is weak: Fieller confidence sets
 
 The LATE is a ratio, and ratios with imprecise denominators behave badly:
 the usual (delta-method) confidence interval can have far-from-nominal
@@ -331,7 +407,7 @@ Fieller set covered the true LATE 95.5% of the time (reporting an
 unbounded set in two-thirds of replications — the statistically honest
 answer) while the Wald interval degenerated.
 
-## 7. Bootstrap inference
+## 8. Bootstrap inference
 
 The paper notes that inference is straightforward "both analytically and
 using the nonparametric bootstrap." The analytic sandwich is the default;
@@ -352,7 +428,7 @@ resampled. Draws that fail — degenerate resamples, overlap violations —
 are dropped and counted; a non-trivial failure rate is itself a sign of
 weak identification, in which case prefer the Fieller set.
 
-## 8. How much does the estimator choice matter?
+## 9. How much does the estimator choice matter?
 
 Referees routinely ask for this table. One call runs all four estimators:
 
@@ -369,7 +445,7 @@ necessarily use reduced specifications — the IPWRA-vs-AIPW pair is the
 like-for-like doubly robust comparison. Here all four agree closely,
 which is what a healthy design looks like.
 
-## 9. Do you even need the instrument? The DR Hausman test
+## 10. Do you even need the instrument? The DR Hausman test
 
 The paper's Section 5 proposes a specification test that the Stata
 package does not implement. The logic: under **one-sided noncompliance**
@@ -407,7 +483,7 @@ for — the construction the paper sketches and this package carries out.
 (In Monte Carlo under a true null the test rejects at 4.7% for a nominal
 5% level.)
 
-## 10. Coming from Stata
+## 11. Coming from Stata
 
 | Stata | R |
 |---|---|
@@ -419,41 +495,16 @@ for — the construction the paper sketches and this package carries out.
 | `[pw = w]` | `weights = "w"` |
 | `, vce(cluster id)` | `cluster = "id"` |
 | `i.educ` factor syntax | a `factor()` column in the formula |
+| `kappalate y (d = z) x` (tau_a) | `method = "kappa"` |
+| `kappalate ..., which(all)` (tau_a,0 / tau_a,10) | `method = "kappa0"` / `"kappa10"` |
+| `kappalate ...` (tau_u / tau_a,1) | `method = "ipw"` / `"ipw", normalized = FALSE` |
+| `kappalate ..., zmodel(cbps)` | `ivmodel = "cbps"` |
 | — | `plot()`, `balance()`, `confint(method = "fieller")`, `vcov = "bootstrap"`, `dr_hausman()`, `drlate_compare()` (R only) |
 
-Point estimates and standard errors agree with the Stata package to
+Point estimates and standard errors agree with the Stata packages to
 numerical precision; the package's test suite enforces this against
-fixtures generated by Stata on the SIPP extract used in the original help
-file.
-
-## Abadie's kappa and the weighting-estimator menu
-
-The companion paper Słoczyński, Uysal, and Wooldridge (2025) studies the
-family of LATE estimators motivated by Abadie's (2003) kappa theorem.
-`drlate` implements the full menu of their Stata command `kappalate`:
-
-| `method` | kappalate name | Weighting |
-|---|---|---|
-| `"kappa"` | `tau_a` | unnormalized Abadie kappa |
-| `"ipw"`, `normalized = FALSE` | `tau_a,1` | unnormalized, treated-arm |
-| `"kappa0"` | `tau_a,0` | unnormalized, untreated-arm |
-| `"kappa10"` | `tau_a,10` | normalized Abadie kappa |
-| `"ipw"` (default normalized) | `tau_u` | normalized (Hájek) |
-
-The paper recommends the normalized estimators — especially `tau_u`, which
-is `method = "ipw"` here — because the unnormalized variants are sensitive
-to the location and scale of the outcome. The kappa methods use no outcome
-or treatment model, so the formulas must be intercept-only:
-
-```{r, eval = FALSE}
-drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
-       data = drlate_sim, method = "kappa10")
-```
-
-Unlike the Stata command, all of drlate's inference machinery applies:
-cluster-robust standard errors, sampling weights, the bootstrap, and
-Fieller confidence sets (`"kappa"` and `"kappa0"`; `"kappa10"` is a
-difference of two ratios, so use the bootstrap there).
+fixtures generated by Stata's `drlate` *and* `kappalate` on the SIPP
+extract used in the original help files.
 
 ## References
 

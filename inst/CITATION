@@ -1,4 +1,4 @@
-citHeader("If you use drlate in your research, please cite both the R package and the original Stata module it implements:")
+citHeader("If you use drlate in your research, please cite the R package, the methodological paper for the estimators you use, and the original Stata module:")
 
 bibentry(
   bibtype = "Manual",
@@ -11,6 +11,26 @@ bibentry(
     "Venkitasubramanian, K. (2026). drlate: Doubly Robust Estimation ",
     "of the Local Average Treatment Effect in R. R package version %s. ",
     "https://github.com/kvenkita/drlate"), meta$Version)
+)
+
+bibentry(
+  bibtype = "Article",
+  title   = paste("Abadie's Kappa and Weighting Estimators of the Local",
+                  "Average Treatment Effect"),
+  author  = c(person("Tymon", "Słoczyński"),
+              person("S. Derya", "Uysal"),
+              person("Jeffrey M.", "Wooldridge")),
+  year    = "2025",
+  journal = "Journal of Business & Economic Statistics",
+  volume  = "43",
+  number  = "1",
+  pages   = "164--177",
+  doi     = "10.1080/07350015.2024.2332763",
+  textVersion = paste0(
+    "Słoczyński, T., Uysal, S. D., & Wooldridge, J. M. (2025). ",
+    "Abadie's Kappa and Weighting Estimators of the Local Average ",
+    "Treatment Effect. Journal of Business & Economic Statistics ",
+    "43(1), 164-177. doi:10.1080/07350015.2024.2332763")
 )
 
 bibentry(
