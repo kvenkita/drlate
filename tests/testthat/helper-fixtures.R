@@ -76,3 +76,12 @@ skip_if_no_fixture <- function(id) {
   }
   if (is.null(sipp_data())) skip("SIPP data unavailable (offline?)")
 }
+
+#' Compare a single-estimator drlate fit against column j of a kappalate
+#' fixture (b<j>/v<j> from e(b)/e(V)).
+expect_kappa_fixture <- function(fit, fx, j, tol_b = 1e-6, tol_se = 1e-4) {
+  expect_equal(unname(coef(fit)[1]), unname(fx[paste0("b", j)]),
+               tolerance = tol_b)
+  expect_equal(unname(sqrt(fit$vcov3[1, 1])),
+               unname(sqrt(fx[paste0("v", j)])), tolerance = tol_se)
+}

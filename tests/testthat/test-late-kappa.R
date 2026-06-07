@@ -128,6 +128,60 @@ test_that("print shows the kappalate estimator aliases", {
                 "tau_a,1", fixed = TRUE)
 })
 
+# ---------------------------------------------------------------------------
+# Golden fixtures (require running inst/stata/make-kappalate-fixtures.do)
+# ---------------------------------------------------------------------------
+
+test_that("kappa estimators match Stata kappalate (logit, SIPP)", {
+  skip_if_no_fixture("kappalate_logit_all")
+  d <- sipp_data()
+  fx <- read_fixture("kappalate_logit_all")
+  spec <- function(...) drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age_5,
+                               data = d, ...)
+  expect_kappa_fixture(spec(method = "kappa"), fx, 1)
+  # audit loose end: drlate IPW unnormalized == kappalate tau_a,1 (SEs too)
+  expect_kappa_fixture(spec(method = "ipw", normalized = FALSE), fx, 2)
+  expect_kappa_fixture(spec(method = "kappa0"), fx, 3)
+  expect_kappa_fixture(spec(method = "kappa10"), fx, 4)
+  # audit loose end: drlate IPW normalized == kappalate tau_u (SEs too)
+  expect_kappa_fixture(spec(method = "ipw"), fx, 5)
+})
+
+test_that("kappa estimators match Stata kappalate (CBPS, SIPP)", {
+  skip_if_no_fixture("kappalate_cbps_all")
+  d <- sipp_data()
+  fx <- read_fixture("kappalate_cbps_all")
+  expect_kappa_fixture(
+    drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age_5, data = d,
+           method = "kappa", ivmodel = "cbps"), fx, 1)
+  expect_kappa_fixture(
+    drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age_5, data = d,
+           method = "ipw", ivmodel = "cbps"), fx, 2)
+})
+
+test_that("kappa estimators match Stata kappalate (cluster SEs, SIPP)", {
+  skip_if_no_fixture("kappalate_logit_clu")
+  d <- sipp_data()
+  fx <- read_fixture("kappalate_logit_clu")
+  spec <- function(...) drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age_5,
+                               data = d, cluster = "cluvar", ...)
+  expect_kappa_fixture(spec(method = "kappa"), fx, 1)
+  expect_kappa_fixture(spec(method = "kappa0"), fx, 3)
+  expect_kappa_fixture(spec(method = "kappa10"), fx, 4)
+})
+
+test_that("kappa estimators match Stata kappalate (one-sided, SIPP)", {
+  skip_if_no_fixture("kappalate_logit_onesided")
+  d <- sipp_data()
+  d$nvstat[d$rsncode == 0] <- 0
+  fx <- read_fixture("kappalate_logit_onesided")
+  spec <- function(...) drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age_5,
+                               data = d, ...)
+  expect_kappa_fixture(spec(method = "kappa"), fx, 1)
+  expect_kappa_fixture(spec(method = "kappa0"), fx, 3)
+  expect_kappa_fixture(spec(method = "kappa10"), fx, 4)
+})
+
 test_that("drlate_compare accepts the kappa methods", {
   cmp <- drlate_compare(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
                         data = drlate_sim,
