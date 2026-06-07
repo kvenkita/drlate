@@ -215,7 +215,8 @@ make_late_block <- function(ctx, start) {
 }
 
 #' The difference of two ratios: late - (num1/denom1 - num0/denom0)
-#' (normalized Abadie kappa, kappalate tau_a,10)
+#' (normalized Abadie kappa, kappalate tau_a,10). The calling builder must
+#' register blocks named exactly num1, denom1, num0, denom0.
 #' @noRd
 make_late_diff_block <- function(ctx, start) {
   n <- ctx$n

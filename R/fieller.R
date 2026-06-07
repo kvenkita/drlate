@@ -81,6 +81,11 @@ format_fieller <- function(f, digits = 4) {
 #' Fieller set from a fitted drlate object
 #' @noRd
 fieller_from_fit <- function(object, level = 0.95) {
+  if (is.null(object$layout$num) || is.null(object$layout$denom)) {
+    stop("the Fieller confidence set is not available for ",
+         "method = \"kappa10\" (a difference of two ratios); use ",
+         "drlate(..., vcov = \"bootstrap\") instead.", call. = FALSE)
+  }
   idx <- c(object$layout$num, object$layout$denom)
   V2 <- object$vcov_full[idx, idx]
   fieller_ci(unname(object$coefficients[2]),

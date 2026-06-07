@@ -84,5 +84,12 @@ need_ctx <- function(object) {
 #' First-stage z-statistic (effect of Z on D over its SE)
 #' @noRd
 firststage_z <- function(x) {
-  unname(x$coefficients[3] / sqrt(x$vcov3[3, 3]))
+  if (length(x$coefficients) >= 3L) {
+    return(unname(x$coefficients[3] / sqrt(x$vcov3[3, 3])))
+  }
+  # kappa10 reports only the LATE; use the treated-arm compliance share
+  # gamma1 = E[kappa_1], the kappa_1-weighted effect of Z on D
+  i <- x$layout$denom1
+  if (is.null(i)) return(NA_real_)
+  unname(x$theta[i] / sqrt(x$vcov_full[i, i]))
 }

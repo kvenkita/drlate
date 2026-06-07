@@ -81,3 +81,25 @@ test_that("kappa10 (tau_a,10) equals its closed form; one reported coef", {
   expect_equal(dim(fit$vcov3), c(1L, 1L))
   expect_true(is.finite(sqrt(fit$vcov3[1, 1])))
 })
+
+test_that("Fieller works for kappa/kappa0 and errors for kappa10", {
+  d <- drlate_sim
+  for (m in c("kappa", "kappa0")) {
+    f <- drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, data = d,
+                method = m)
+    ci <- confint(f, method = "fieller")
+    expect_s3_class(ci, "drlate_fieller")
+    expect_identical(ci$type, "bounded")
+    expect_true(ci$lower < coef(f)[[1]] && ci$upper > coef(f)[[1]])
+  }
+  f10 <- drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, data = d,
+                method = "kappa10")
+  expect_error(confint(f10, method = "fieller"), "kappa10")
+})
+
+test_that("kappa10 prints (first-stage z from gamma1) without error", {
+  f10 <- drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
+                data = drlate_sim, method = "kappa10")
+  expect_output(print(f10), "First stage")
+  expect_true(is.finite(firststage_z(f10)))
+})
