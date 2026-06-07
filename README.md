@@ -70,7 +70,7 @@ This package implements the doubly-robust LATE estimator introduced in:
 | | |
 |---|---|
 | Estimands | LATE, LATT |
-| Estimators (`method`) | IPWRA (default), IPW, AIPW, RA |
+| Estimators (`method`) | IPWRA (default), IPW, AIPW, RA; Abadie-kappa weighting: `kappa`, `kappa0`, `kappa10` (Słoczyński, Uysal & Wooldridge 2025, JBES) |
 | Outcome / treatment models | linear, logit, Poisson |
 | Instrument propensity score models (`ivmodel`) | logit MLE (default), CBPS, IPT |
 | Weighting | normalized (default) or unnormalized moments; sampling weights |

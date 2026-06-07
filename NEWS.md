@@ -1,3 +1,14 @@
+# drlate (development version)
+
+* New kappa-weighting estimators of the LATE from Słoczyński, Uysal, and
+  Wooldridge (2025, *JBES* 43(1), 164-177): `method = "kappa"` (tau_a),
+  `"kappa0"` (tau_a,0), and `"kappa10"` (tau_a,10), validated against the
+  Stata `kappalate` command. Cluster-robust SEs, sampling weights, the
+  bootstrap, and (for `"kappa"`/`"kappa0"`) Fieller confidence sets carry
+  over from the existing machinery.
+* Printed output now shows the kappalate names for the IPW estimators:
+  normalized IPW is `tau_u`, unnormalized IPW is `tau_a,1`.
+
 # drlate 0.1.0 (patch)
 
 Changes from an internal econometric audit (Monte Carlo evidence in

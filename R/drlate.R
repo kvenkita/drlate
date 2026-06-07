@@ -25,7 +25,15 @@
 #'   2014; not available with `estimand = "latt"`), or `"ipt"` (inverse
 #'   probability tilting, Graham, Pinto, and Egel 2012).
 #' @param method Estimator: `"ipwra"` (inverse-probability-weighted
-#'   regression adjustment; default), `"ipw"`, `"aipw"`, or `"ra"`.
+#'   regression adjustment; default), `"ipw"`, `"aipw"`, `"ra"`, or one of
+#'   the kappa-weighting estimators of Słoczyński, Uysal, and Wooldridge
+#'   (2025): `"kappa"` (unnormalized Abadie kappa; kappalate's `tau_a`),
+#'   `"kappa0"` (untreated-arm kappa; `tau_a,0`), or `"kappa10"`
+#'   (normalized kappa; `tau_a,10`). The kappa estimators require
+#'   intercept-only outcome and treatment formulas, a binary treatment, and
+#'   `estimand = "late"`; `ivmodel = "cbps"` is available for `"kappa"`
+#'   only, and `"ipt"` for none of them. drlate's normalized and
+#'   unnormalized `"ipw"` coincide with kappalate's `tau_u` and `tau_a,1`.
 #' @param estimand `"late"` (default) or `"latt"`.
 #' @param normalized Logical; use normalized moment conditions (default
 #'   `TRUE`). Only relevant for `method = "ipw"` and `method = "aipw"`.
@@ -68,11 +76,19 @@
 #'   diagonal by construction, as in the Stata package), `vcov_full` (the
 #'   joint variance matrix of all stacked parameters), `theta` (all stacked
 #'   parameter estimates), `N`, `dmeanz1`, `dmeanz0`, and the call.
+#'   For `method = "kappa10"` only the causal estimate is reported
+#'   (the estimator is a difference of two ratios, so no single
+#'   numerator/denominator pair exists).
 #'
 #' @references
 #' Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2022). "Doubly Robust
 #' Estimation of Local Average Treatment Effects Using Inverse Probability
 #' Weighted Regression Adjustment." \doi{10.48550/arXiv.2208.01300}
+#'
+#' Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2025). "Abadie's
+#' Kappa and Weighting Estimators of the Local Average Treatment Effect."
+#' \emph{Journal of Business & Economic Statistics} 43(1), 164--177.
+#' \doi{10.1080/07350015.2024.2332763}
 #'
 #' @examples
 #' data(drlate_sim)

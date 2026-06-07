@@ -17,7 +17,7 @@
 #' doubly robust rows (IPWRA, AIPW) are the like-for-like pair.
 #'
 #' @inheritParams drlate
-#' @param methods Estimators to run.
+#' @param methods Estimators to run (any of the `method` values accepted by [drlate()]).
 #' @param both_norms Logical; also run the unnormalized variants of
 #'   `"ipw"` and `"aipw"` (default `FALSE`).
 #' @param ... Passed on to [drlate()] (e.g. `omodel`, `tmodel`, `ivmodel`,

@@ -71,8 +71,10 @@ expect_matches_fixture <- function(fit, id,
 skip_if_no_fixture <- function(id) {
   skip_on_cran()
   if (is.null(fixture_path(id))) {
-    skip(paste0("fixture '", id, "' not generated (run ",
-                "inst/stata/make-fixtures.do in Stata)"))
+    dofile <- if (startsWith(id, "kappalate")) "make-kappalate-fixtures.do"
+              else "make-fixtures.do"
+    skip(paste0("fixture '", id, "' not generated (run inst/stata/",
+                dofile, " in Stata)"))
   }
   if (is.null(sipp_data())) skip("SIPP data unavailable (offline?)")
 }
