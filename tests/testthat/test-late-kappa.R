@@ -113,3 +113,17 @@ test_that("bootstrap works for kappa10 (single reported coefficient)", {
   ci <- confint(fit)
   expect_identical(nrow(ci), 1L)
 })
+
+test_that("print shows the kappalate estimator aliases", {
+  d <- drlate_sim
+  spec <- function(...) drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
+                               data = d, ...)
+  expect_output(print(spec(method = "kappa")), "tau_a;", fixed = TRUE)
+  expect_output(print(spec(method = "kappa0")), "tau_a,0", fixed = TRUE)
+  expect_output(print(spec(method = "kappa10")), "tau_a,10", fixed = TRUE)
+  expect_output(print(spec(method = "kappa")), "none (kappa weighting)",
+                fixed = TRUE)
+  expect_output(print(spec(method = "ipw")), "tau_u", fixed = TRUE)
+  expect_output(print(spec(method = "ipw", normalized = FALSE)),
+                "tau_a,1", fixed = TRUE)
+})
