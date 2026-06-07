@@ -10,7 +10,7 @@ test_that("kappa methods validate inputs", {
   expect_error(
     drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, data = d,
            method = "kappa", estimand = "latt"),
-    "\"late\" only")
+    "estimand = \"late\" only")
   expect_error(
     drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, data = d,
            method = "kappa", ivmodel = "ipt"),
@@ -19,6 +19,10 @@ test_that("kappa methods validate inputs", {
     drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, data = d,
            method = "kappa10", ivmodel = "cbps"),
     "cbps.*only with method = \"kappa\"")
+  expect_error(
+    drlate(lwage ~ age, nvstat ~ 1, rsncode ~ age + educ, data = d,
+           method = "kappa0"),
+    "covariates are not allowed")
   d2 <- d
   d2$nvstat <- d2$nvstat + 1   # treatment in {1, 2}: not binary 0/1
   expect_error(

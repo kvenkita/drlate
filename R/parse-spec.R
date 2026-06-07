@@ -52,11 +52,6 @@ build_ctx <- function(outcome, treatment, instrument, data,
          "method = \"ra\"; use `z ~ 1`.", call. = FALSE)
   }
   if (method %in% c("kappa", "kappa0", "kappa10")) {
-    if (ncol(Xo) > 1L || ncol(Xt) > 1L) {
-      stop("covariates are not allowed in the outcome or treatment ",
-           "equations with the kappa-weighting estimators; use `y ~ 1` ",
-           "and `d ~ 1`.", call. = FALSE)
-    }
     if (estimand == "latt") {
       stop("the kappa-weighting estimators are available for ",
            "estimand = \"late\" only (Sloczynski, Uysal, and Wooldridge ",
@@ -66,10 +61,15 @@ build_ctx <- function(outcome, treatment, instrument, data,
       stop("ivmodel = \"ipt\" is not available with the kappa-weighting ",
            "estimators.", call. = FALSE)
     }
-    if (method != "kappa" && ivmodel == "cbps") {
+    if (method %in% c("kappa0", "kappa10") && ivmodel == "cbps") {
       stop("ivmodel = \"cbps\" is available only with method = \"kappa\" ",
            "among the kappa-weighting estimators, following the Stata ",
            "kappalate command.", call. = FALSE)
+    }
+    if (ncol(Xo) > 1L || ncol(Xt) > 1L) {
+      stop("covariates are not allowed in the outcome or treatment ",
+           "equations with the kappa-weighting estimators; use `y ~ 1` ",
+           "and `d ~ 1`.", call. = FALSE)
     }
     check_binary(d, all.vars(treatment)[1L], "treatment")
   }
