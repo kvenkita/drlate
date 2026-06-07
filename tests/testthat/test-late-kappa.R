@@ -127,3 +127,12 @@ test_that("print shows the kappalate estimator aliases", {
   expect_output(print(spec(method = "ipw", normalized = FALSE)),
                 "tau_a,1", fixed = TRUE)
 })
+
+test_that("drlate_compare accepts the kappa methods", {
+  cmp <- drlate_compare(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
+                        data = drlate_sim,
+                        methods = c("ipw", "kappa", "kappa0", "kappa10"))
+  expect_identical(nrow(cmp), 4L)
+  expect_true(all(is.finite(cmp$estimate)))
+  expect_true(all(is.finite(cmp$se)))
+})

@@ -36,7 +36,8 @@
 drlate_compare <- function(outcome, treatment, instrument, data,
                            methods = c("ipwra", "ipw", "aipw", "ra"),
                            both_norms = FALSE, ...) {
-  methods <- match.arg(methods, c("ipwra", "ipw", "aipw", "ra"),
+  methods <- match.arg(methods, c("ipwra", "ipw", "aipw", "ra",
+                                  "kappa", "kappa0", "kappa10"),
                        several.ok = TRUE)
   lhs <- function(f) f[[2]]
 
@@ -49,10 +50,10 @@ drlate_compare <- function(outcome, treatment, instrument, data,
 
   rows <- lapply(specs, function(sp) {
     fo <- outcome; ft <- treatment; fz <- instrument
-    if (sp$me == "ipw") {
+    if (sp$me %in% c("ipw", "kappa", "kappa0", "kappa10")) {
       if (length(all.vars(fo)) > 1L || length(all.vars(ft)) > 1L) {
-        message("method = \"ipw\": dropping outcome/treatment covariates ",
-                "(weighted means only).")
+        message("method = \"", sp$me, "\": dropping outcome/treatment ",
+                "covariates (weighted means only).")
       }
       fo <- stats::as.formula(call("~", lhs(outcome), 1))
       ft <- stats::as.formula(call("~", lhs(treatment), 1))
