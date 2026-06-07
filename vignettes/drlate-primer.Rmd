@@ -282,6 +282,9 @@ in the weights:
 * `ivmodel = "ipt"` — inverse probability tilting (Graham, Pinto, and
   Egel 2012): fits a separate tilted score per arm; the resulting weights
   are exactly normalized by construction.
+* `ivmodel = "probit"` *(new in 0.2.0)* — probit maximum likelihood,
+  mirroring `kappalate`'s `zmodel(probit)`; available for the weighting
+  estimators (`"ipw"` and the kappa methods of Section 6).
 
 ```{r}
 coef(drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,

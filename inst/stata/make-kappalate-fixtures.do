@@ -69,6 +69,7 @@ generate cluvar = educ
 * Scenarios
 * --------------------------------------------------------------------------
 runkap kappalate_logit_all  kappalate lwage (nvstat = rsncode) age_5, zmodel(logit) which(all)
+runkap kappalate_probit_all kappalate lwage (nvstat = rsncode) age_5, zmodel(probit) which(all)
 runkap kappalate_cbps_all   kappalate lwage (nvstat = rsncode) age_5, zmodel(cbps) which(all)
 runkap kappalate_logit_clu  kappalate lwage (nvstat = rsncode) age_5, zmodel(logit) which(all) vce(cluster cluvar)
 

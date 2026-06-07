@@ -44,6 +44,19 @@ make_score_logit_block <- function(ctx, eq, X, yvar, coefs) {
       (yvar - stats::plogis(lc(theta, layout, eq, X))) * X)
 }
 
+#' Probit MLE score: ((z - Phi) / (Phi (1 - Phi))) * phi(xb) * x
+#' (kappalate's eqips probit form)
+#' @noRd
+make_ps_probit_block <- function(ctx, coefs, eq = "zhat") {
+  X <- ctx$Xz; z <- ctx$z
+  new_block(eq, paste0(eq, ":", colnames(X)), coefs,
+    function(theta, layout) {
+      xb <- lc(theta, layout, eq, X)
+      p <- stats::pnorm(xb)
+      ((z - p) / (p * (1 - p)) * stats::dnorm(xb)) * X
+    })
+}
+
 #' CBPS balancing moment: (z/p - (1-z)/(1-p)) * x
 #' @noRd
 make_ps_cbps_block <- function(ctx, coefs, eq = "zhat") {
@@ -99,6 +112,20 @@ rw_invp <- function(ctx, eq = "zhat") {
 rw_inv1mp <- function(ctx, eq = "zhat") {
   X <- ctx$Xz
   function(theta, layout) 1 + exp(lc(theta, layout, eq, X))
+}
+
+#' 1/p = 1/pnorm(zhat)   (Z=1 arm, probit instrument PS)
+#' @noRd
+rw_invp_probit <- function(ctx, eq = "zhat") {
+  X <- ctx$Xz
+  function(theta, layout) 1 / stats::pnorm(lc(theta, layout, eq, X))
+}
+
+#' 1/(1-p) = 1/pnorm(-zhat)   (Z=0 arm, probit instrument PS)
+#' @noRd
+rw_inv1mp_probit <- function(ctx, eq = "zhat") {
+  X <- ctx$Xz
+  function(theta, layout) 1 / stats::pnorm(-lc(theta, layout, eq, X))
 }
 
 #' Odds p/(1-p) = exp(zhat)   (Z=0 arm of LATT estimators; with `X` it can

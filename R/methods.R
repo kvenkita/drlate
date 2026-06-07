@@ -31,7 +31,8 @@ print.drlate <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
     tmodeld <- "none (kappa weighting)"
   }
   zmodeld <- switch(x$ivmodel,
-    logit = "logit (MLE)", cbps = "logit (CBPS)", ipt = "logit (IPT)")
+    logit = "logit (MLE)", cbps = "logit (CBPS)", ipt = "logit (IPT)",
+    probit = "probit (MLE)")
 
   cat("\n", title, "\n", sep = "")
   cat("Number of obs    : ", format(x$N, big.mark = ","), "\n", sep = "")

@@ -39,8 +39,9 @@ The estimation core supports:
   outcome and the treatment may each be continuous, binary, or a count.
 * **Instrument propensity score models** (`ivmodel`): logistic regression by
   maximum likelihood (default), covariate balancing (`"cbps"`, Imai and
-  Ratkovic 2014), or inverse probability tilting (`"ipt"`, Graham, Pinto,
-  and Egel 2012).
+  Ratkovic 2014), inverse probability tilting (`"ipt"`, Graham, Pinto,
+  and Egel 2012), or probit maximum likelihood (`"probit"`, for the
+  weighting estimators; *new in 0.2.0*).
 * **Normalized** (default) or unnormalized weighting for IPW and AIPW.
 * Sampling weights and cluster-robust standard errors.
 

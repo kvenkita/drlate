@@ -22,9 +22,9 @@ estimate_late <- function(ctx, ps) {
 }
 
 #' Shared: PS moment block(s) and the arm reweight functions.
-#' For logit/cbps a single eqips block and reweights through `zhat`;
-#' for ipt two tilt blocks (eqips1, eqips0) and reweights through
-#' `zhat1`/`zhat0` (drlate_estimate_late.ado lines 25-38).
+#' For logit/cbps/probit a single eqips block and reweights through `zhat`
+#' (link-specific closures); for ipt two tilt blocks (eqips1, eqips0) and
+#' reweights through `zhat1`/`zhat0` (drlate_estimate_late.ado lines 25-38).
 #' @noRd
 late_ps_setup <- function(ctx, ps) {
   if (ctx$ivmodel == "ipt") {
@@ -32,6 +32,9 @@ late_ps_setup <- function(ctx, ps) {
                        make_ps_ipt0_block(ctx, ps$bips0)),
          rw1 = rw_invp(ctx, "zhat1"),
          rw0 = rw_inv1mp(ctx, "zhat0"))
+  } else if (ctx$ivmodel == "probit") {
+    list(blocks = list(make_ps_probit_block(ctx, ps$bips)),
+         rw1 = rw_invp_probit(ctx), rw0 = rw_inv1mp_probit(ctx))
   } else {
     blk <- switch(ctx$ivmodel,
       logit = make_ps_logit_block(ctx, ps$bips),

@@ -22,8 +22,12 @@
 #'   be 0/1), `"linear"`, or `"poisson"`.
 #' @param ivmodel Instrument propensity score model: `"logit"` (maximum
 #'   likelihood; default), `"cbps"` (covariate balancing, Imai and Ratkovic
-#'   2014; not available with `estimand = "latt"`), or `"ipt"` (inverse
-#'   probability tilting, Graham, Pinto, and Egel 2012).
+#'   2014; not available with `estimand = "latt"`), `"ipt"` (inverse
+#'   probability tilting, Graham, Pinto, and Egel 2012), or `"probit"`
+#'   (maximum likelihood; mirrors kappalate's `zmodel(probit)` and is
+#'   available only for the weighting estimators that command covers —
+#'   `"ipw"`, `"kappa"`, `"kappa0"`, `"kappa10"` — with
+#'   `estimand = "late"`).
 #' @param method Estimator: `"ipwra"` (inverse-probability-weighted
 #'   regression adjustment; default), `"ipw"`, `"aipw"`, `"ra"`, or one of
 #'   the kappa-weighting estimators of Słoczyński, Uysal, and Wooldridge
@@ -78,7 +82,12 @@
 #'   parameter estimates), `N`, `dmeanz1`, `dmeanz0`, and the call.
 #'   For `method = "kappa10"` only the causal estimate is reported
 #'   (the estimator is a difference of two ratios, so no single
-#'   numerator/denominator pair exists).
+#'   numerator/denominator pair exists). For `"kappa"` and `"kappa0"` the
+#'   third coefficient is the mean of the corresponding kappa weight: under
+#'   the LATE assumptions it estimates the same complier share as the IPW
+#'   first-stage contrast (the population ATE of Z on D), but it is a
+#'   different sample statistic and the two can diverge under propensity
+#'   score misspecification.
 #'
 #' @references
 #' Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2022). "Doubly Robust
@@ -100,7 +109,7 @@
 drlate <- function(outcome, treatment, instrument, data,
                    omodel = c("linear", "logit", "poisson"),
                    tmodel = c("logit", "linear", "poisson"),
-                   ivmodel = c("logit", "cbps", "ipt"),
+                   ivmodel = c("logit", "cbps", "ipt", "probit"),
                    method = c("ipwra", "ipw", "aipw", "ra",
                               "kappa", "kappa0", "kappa10"),
                    estimand = c("late", "latt"),

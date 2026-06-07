@@ -8,6 +8,13 @@
   over from the existing machinery.
 * Printed output now shows the kappalate names for the IPW estimators:
   normalized IPW is `tau_u`, unnormalized IPW is `tau_a,1`.
+* New `ivmodel = "probit"` (kappalate's `zmodel(probit)`) for the
+  weighting estimators (`"ipw"` and the kappa methods), completing
+  coverage of the kappalate command's options.
+* `drlate_compare()` now reports each kappa estimator's own normalization
+  in the `normalized` column, and `?drlate` documents that the kappa
+  denominators are kappa-weight means — estimating the same complier share
+  as the IPW first-stage contrast, but as a different sample statistic.
 
 # drlate 0.1.0 (patch)
 

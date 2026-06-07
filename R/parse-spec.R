@@ -77,6 +77,14 @@ build_ctx <- function(outcome, treatment, instrument, data,
     stop("ivmodel = \"cbps\" is not available with estimand = \"latt\".",
          call. = FALSE)
   }
+  if (ivmodel == "probit" &&
+      !(method %in% c("ipw", "kappa", "kappa0", "kappa10") &&
+        estimand == "late")) {
+    stop("ivmodel = \"probit\" is available only for the weighting ",
+         "estimators covered by the Stata kappalate command (method ",
+         "\"ipw\", \"kappa\", \"kappa0\", or \"kappa10\") with ",
+         "estimand = \"late\".", call. = FALSE)
+  }
 
   # --- Input validation (drlate_estimate.ado section 4) ---
   zname <- all.vars(instrument)[1L]

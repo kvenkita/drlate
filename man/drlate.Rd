@@ -11,7 +11,7 @@ drlate(
   data,
   omodel = c("linear", "logit", "poisson"),
   tmodel = c("logit", "linear", "poisson"),
-  ivmodel = c("logit", "cbps", "ipt"),
+  ivmodel = c("logit", "cbps", "ipt", "probit"),
   method = c("ipwra", "ipw", "aipw", "ra", "kappa", "kappa0", "kappa10"),
   estimand = c("late", "latt"),
   normalized = TRUE,
@@ -47,8 +47,12 @@ be 0/1), \code{"linear"}, or \code{"poisson"}.}
 
 \item{ivmodel}{Instrument propensity score model: \code{"logit"} (maximum
 likelihood; default), \code{"cbps"} (covariate balancing, Imai and Ratkovic
-2014; not available with \code{estimand = "latt"}), or \code{"ipt"} (inverse
-probability tilting, Graham, Pinto, and Egel 2012).}
+2014; not available with \code{estimand = "latt"}), \code{"ipt"} (inverse
+probability tilting, Graham, Pinto, and Egel 2012), or \code{"probit"}
+(maximum likelihood; mirrors kappalate's \code{zmodel(probit)} and is
+available only for the weighting estimators that command covers —
+\code{"ipw"}, \code{"kappa"}, \code{"kappa0"}, \code{"kappa10"} — with
+\code{estimand = "late"}).}
 
 \item{method}{Estimator: \code{"ipwra"} (inverse-probability-weighted
 regression adjustment; default), \code{"ipw"}, \code{"aipw"}, \code{"ra"}, or one of
@@ -117,7 +121,12 @@ joint variance matrix of all stacked parameters), \code{theta} (all stacked
 parameter estimates), \code{N}, \code{dmeanz1}, \code{dmeanz0}, and the call.
 For \code{method = "kappa10"} only the causal estimate is reported
 (the estimator is a difference of two ratios, so no single
-numerator/denominator pair exists).
+numerator/denominator pair exists). For \code{"kappa"} and \code{"kappa0"} the
+third coefficient is the mean of the corresponding kappa weight: under
+the LATE assumptions it estimates the same complier share as the IPW
+first-stage contrast (the population ATE of Z on D), but it is a
+different sample statistic and the two can diverge under propensity
+score misspecification.
 }
 \description{
 Estimates the local average treatment effect (LATE) or the local average

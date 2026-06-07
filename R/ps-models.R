@@ -8,6 +8,22 @@
 fit_ps <- function(ctx) {
   z <- ctx$z; Xz <- ctx$Xz; w <- ctx$w
 
+  if (ctx$ivmodel == "probit") {
+    # Probit MLE (kappalate zmodel(probit)); no logit warm start needed
+    fitp <- suppressWarnings(
+      stats::glm.fit(Xz, z, weights = w,
+                     family = stats::quasibinomial(link = "probit"))
+    )
+    if (!fitp$converged) {
+      stop("convergence not achieved for probit instrument propensity ",
+           "score estimation.", call. = FALSE)
+    }
+    b <- stats::coef(fitp)
+    ps <- stats::pnorm(drop(Xz %*% b))
+    return(list(bips = b, ps = ps,
+                wt1 = z / ps, wt0 = (1 - z) / (1 - ps)))
+  }
+
   # Logit MLE start (and the full answer when ivmodel == "logit")
   fit <- suppressWarnings(
     stats::glm.fit(Xz, z, weights = w, family = stats::quasibinomial())

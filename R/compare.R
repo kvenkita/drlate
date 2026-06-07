@@ -78,7 +78,13 @@ drlate_compare <- function(outcome, treatment, instrument, data,
                         ci_lo = NA_real_, ci_hi = NA_real_))
     }
     ci <- confint(fit)[1, ]
-    data.frame(method = sp$me, normalized = fit$statnorm == "nrm",
+    # The kappa estimators have a fixed normalization (they ignore the
+    # `normalized` flag): tau_a and tau_a,0 are unnormalized, tau_a,10 is
+    # normalized. Other methods report the fit's effective statnorm.
+    norm_flag <- switch(sp$me,
+      kappa = FALSE, kappa0 = FALSE, kappa10 = TRUE,
+      fit$statnorm == "nrm")
+    data.frame(method = sp$me, normalized = norm_flag,
                estimate = unname(coef(fit)[1]),
                se = sqrt(fit$vcov3[1, 1]),
                ci_lo = unname(ci[1]), ci_hi = unname(ci[2]))
