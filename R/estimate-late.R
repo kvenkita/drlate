@@ -9,11 +9,12 @@ estimate_late <- function(ctx, ps) {
          "Z on D is constant and no estimation is needed.", call. = FALSE)
   }
   switch(ctx$method,
-    ipwra = late_ipwra(ctx, ps),
-    ra    = late_ra(ctx),
-    ipw   = late_ipw(ctx, ps),
-    aipw  = late_aipw(ctx, ps),
+    ipwra  = late_ipwra(ctx, ps),
+    ra     = late_ra(ctx),
+    ipw    = late_ipw(ctx, ps),
+    aipw   = late_aipw(ctx, ps),
     kappa  = late_kappa(ctx, ps),
+    kappa0 = late_kappa0(ctx, ps),
     stop("method = \"", ctx$method, "\" is not implemented yet.",
          call. = FALSE)
   )
@@ -497,6 +498,30 @@ late_kappa <- function(ctx, ps) {
     make_custom_block(ctx, "denom", denom, function(theta, layout)
       1 - d * (1 - z) * rw0(theta, layout) -
         (1 - d) * z * rw1(theta, layout) - theta[layout$denom]),
+    make_late_block(ctx, late)
+  ))
+  list(blocks = blocks,
+       estimates = c(late = late, num = num, denom = denom))
+}
+
+#' LATE via the (1-D)-arm unnormalized kappa weighting (kappalate tau_a,0).
+#' Stata: kappalate.ado eq_delta + eq_gamma0 + eq_tau_a0; gamma0 uses the
+#' (D-1) contrast form, identical pointwise to (1-D)((1-Z)-(1-p))/(p(1-p)).
+#' @noRd
+late_kappa0 <- function(ctx, ps) {
+  w <- ctx$w; z <- ctx$z; y <- ctx$y; d <- ctx$d
+  setup <- late_ps_setup(ctx, ps)
+  rw1 <- setup$rw1; rw0 <- setup$rw0
+
+  num   <- wmean(ps$wt1 * y - ps$wt0 * y, w)
+  denom <- wmean((d - 1) * (ps$wt1 - ps$wt0), w)
+  late  <- num / denom
+
+  blocks <- c(setup$blocks, list(
+    make_kappa_num_block(ctx, setup, num),
+    make_custom_block(ctx, "denom", denom, function(theta, layout)
+      (d - 1) * (z * rw1(theta, layout) - (1 - z) * rw0(theta, layout)) -
+        theta[layout$denom]),
     make_late_block(ctx, late)
   ))
   list(blocks = blocks,

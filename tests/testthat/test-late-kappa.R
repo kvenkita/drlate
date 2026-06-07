@@ -20,6 +20,18 @@ test_that("kappa works with ivmodel = cbps", {
   expect_true(all(is.finite(sqrt(diag(fit$vcov3)))))
 })
 
+test_that("kappa0 (tau_a,0) equals its closed form; system valid", {
+  d <- drlate_sim
+  fit <- expect_valid_system(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ, d,
+                             method = "kappa0")
+  ps <- fitted(glm(rsncode ~ age + educ, binomial, data = d))
+  z <- d$rsncode; dd <- d$nvstat; y <- d$lwage
+  delta <- mean(z * y / ps - (1 - z) * y / (1 - ps))
+  gam0 <- mean((dd - 1) * (z / ps - (1 - z) / (1 - ps)))
+  expect_equal(unname(coef(fit)), c(delta / gam0, delta, gam0),
+               tolerance = 1e-8)
+})
+
 test_that("kappa methods validate inputs", {
   d <- drlate_sim
   expect_error(
