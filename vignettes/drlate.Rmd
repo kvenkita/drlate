@@ -241,6 +241,10 @@ drlate(lwage ~ age_5, nvstat ~ age_5, rsncode ~ age_5, data = sipp,
 drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age_5, data = sipp,
        method = "kappa")     # tau_a; likewise "kappa0", "kappa10",
                              # and method = "ipw" for tau_u / tau_a,1
+
+# Stata: kappalate lwage (nvstat = rsncode) age_5, zmodel(probit)
+drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age_5, data = sipp,
+       method = "kappa", ivmodel = "probit")
 ```
 
 The package's test suite verifies numerical equivalence of estimates and

@@ -32,6 +32,10 @@ Hausman test of unconfoundedness.
   uniquely — Fieller weak-instrument-robust confidence sets are available
   on the kappa estimators (the Stata command offers robust/cluster
   standard errors only).
+* Probit instrument propensity scores (`ivmodel = "probit"`, mirroring
+  `kappalate`'s `zmodel(probit)`) for the weighting estimators — with this,
+  every estimator and propensity-score option of the Stata `kappalate`
+  command is covered and fixture-validated.
 * Printed output shows the `kappalate` estimator names throughout.
 
 See [NEWS](NEWS.md) for the full changelog.
