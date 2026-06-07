@@ -103,3 +103,13 @@ test_that("kappa10 prints (first-stage z from gamma1) without error", {
   expect_output(print(f10), "First stage")
   expect_true(is.finite(firststage_z(f10)))
 })
+
+test_that("bootstrap works for kappa10 (single reported coefficient)", {
+  fit <- drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
+                data = drlate_sim, method = "kappa10",
+                vcov = "bootstrap", boot_reps = 25L, boot_seed = 42)
+  expect_identical(colnames(fit$boot$draws), "late")
+  expect_true(is.finite(fit$boot$se[["late"]]))
+  ci <- confint(fit)
+  expect_identical(nrow(ci), 1L)
+})

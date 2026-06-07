@@ -157,7 +157,7 @@ drlate <- function(outcome, treatment, instrument, data,
   boot <- NULL
   if (vcov == "bootstrap") {
     boot <- drlate_boot(ctx, reps = boot_reps, seed = boot_seed,
-                        cores = cores)
+                        cores = cores, stat_names = names(est$estimates))
   }
 
   structure(list(
