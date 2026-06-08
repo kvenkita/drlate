@@ -43,7 +43,8 @@ drlate_compare(
 
 - methods:
 
-  Estimators to run.
+  Estimators to run (any of the `method` values accepted by
+  [`drlate()`](https://kvenkita.github.io/drlate/reference/drlate.md)).
 
 - both_norms:
 

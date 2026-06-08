@@ -2,13 +2,17 @@
 
 This primer explains, with as little formalism as possible, what the
 estimators in `drlate` do and when you would want them. It is a
-companion to Słoczyński, Uysal, and Wooldridge (2022), *“Doubly Robust
-Estimation of Local Average Treatment Effects Using Inverse Probability
-Weighted Regression Adjustment”* (arXiv:2208.01300). Like the original
-Stata command of the same name, this package implements the paper’s
-method. Along the way it demonstrates every tool in the package:
-estimation, diagnostics, weak-instrument-robust inference, the
-bootstrap, the estimator comparison, and the doubly robust Hausman test.
+companion to two papers by Słoczyński, Uysal, and Wooldridge: *“Doubly
+Robust Estimation of Local Average Treatment Effects Using Inverse
+Probability Weighted Regression Adjustment”* (2022, arXiv:2208.01300),
+whose estimators the authors’ Stata command `drlate` implements, and
+*“Abadie’s Kappa and Weighting Estimators of the Local Average Treatment
+Effect”* (2025, *JBES*), whose estimator menu their command `kappalate`
+implements. This package implements both papers behind one interface.
+Along the way the primer demonstrates every tool in the package:
+estimation, the weighting-estimator menu, diagnostics,
+weak-instrument-robust inference, the bootstrap, the estimator
+comparison, and the doubly robust Hausman test.
 
 ## 1. The problem: a treatment people choose
 
@@ -16,9 +20,9 @@ Suppose you want to know the effect of a treatment $`D`$ (a job training
 program, military service, a 401(k) plan) on an outcome $`Y`$ (wages,
 savings). People *choose* whether to take the treatment, and the ones
 who take it differ from the ones who don’t in ways you can’t fully
-observe. Comparing treated and untreated outcomes — even with regression
-controls — confounds the effect of the treatment with the effect of
-being the kind of person who takes it.
+observe. Comparing treated and untreated outcomes, even with regression
+controls, confounds the effect of the treatment with the effect of being
+the kind of person who takes it.
 
 The classic escape is an **instrument** $`Z`$: a binary variable that
 shifts the *likelihood* of treatment but has no direct channel to the
@@ -48,17 +52,20 @@ Real instruments are rarely as clean as a lottery. Distance to college
 is exogenous *given* family background and region; a draft lottery is
 clean, but conditioning on covariates still buys precision. So in
 practice you need the instrument to be as-good-as-random **conditional
-on covariates $`X`$** — and then both the numerator and the denominator
+on covariates $`X`$**, and then both the numerator and the denominator
 above become covariate-adjusted contrasts. How exactly to adjust them is
-the entire subject of the paper and this package.
+the entire subject of the 2022 paper and this package.
 
-## 2. The four estimators in one picture
+## 2. The four core estimators in one picture
 
-All four estimators in `drlate` build the same ratio; they differ only
-in how each piece is adjusted for $`X`$. Each piece is an “effect of
-$`Z`$ on something” — a problem formally identical to estimating an
-average treatment effect of $`Z`$ under unconfoundedness — so the
-familiar treatment-effects toolbox applies:
+All estimators in `drlate` build the same ratio; they differ only in how
+each piece is adjusted for $`X`$. This section covers the four
+regression-and-weighting strategies from the 2022 paper; a second
+family, the Abadie-kappa weighting menu from the 2025 paper, appears in
+Section 6. Each piece is an “effect of $`Z`$ on something”, a problem
+formally identical to estimating an average treatment effect of $`Z`$
+under unconfoundedness, so the familiar treatment-effects toolbox
+applies:
 
 | `method` | How it adjusts | Needs correct… |
 |----|----|----|
@@ -79,7 +86,7 @@ probability of 1.3, a negative count. IPWRA achieves it by *reweighting
 a quasi-likelihood regression*, so as long as you choose a sensible
 family (logit for binary outcomes, Poisson for counts), fitted values
 stay in range by construction. Hence IPWRA’s appealing small-sample
-behavior in the paper’s simulations — and its place as the package
+behavior in the paper’s simulations, and its place as the package
 default.
 
 A second practical lesson from the paper concerns **normalization**. Raw
@@ -87,7 +94,7 @@ IPW weights $`Z_i/\hat p(X_i)`$ need not average to one in a sample; if
 a few observations have small estimated propensity scores, unnormalized
 estimators can be erratic. Normalizing the weights to sum to one (the
 Hájek construction) fixes this and costs nothing, so `normalized = TRUE`
-is the default — it matters only for `"ipw"` and `"aipw"`; IPWRA is
+is the default. It matters only for `"ipw"` and `"aipw"`; IPWRA is
 normalized by construction.
 
 ## 3. A worked example
@@ -180,16 +187,16 @@ Read the three rows bottom-up:
 
 The final line reports **first-stage strength**: with a single binary
 instrument, the squared z-statistic is the first-stage robust F. Here F
-≈ 1084 — far above the conventional F = 10 danger threshold — so Wald
-inference on the ratio is trustworthy. Section 6 shows what the package
+≈ 1084, far above the conventional F = 10 danger threshold, so Wald
+inference on the ratio is trustworthy. Section 7 shows what the package
 does when it isn’t.
 
-The standard errors here are not an afterthought: every estimation stage
-(the propensity score, both outcome regressions, both treatment
-regressions, and the ratio itself) is stacked into one moment system and
-a joint sandwich variance is computed. The uncertainty from estimating
-the propensity score propagates into the LATE’s standard error, exactly
-as in the Stata original.
+The standard errors here are not an afterthought: drlate stacks every
+estimation stage (the propensity score, both outcome regressions, both
+treatment regressions, and the ratio itself) into one moment system and
+computes a joint sandwich variance. The uncertainty from estimating the
+propensity score propagates into the LATE’s standard error, exactly as
+in the Stata original.
 
 ### Seeing double robustness work
 
@@ -317,6 +324,9 @@ in the weights:
 - `ivmodel = "ipt"` — inverse probability tilting (Graham, Pinto, and
   Egel 2012): fits a separate tilted score per arm; the resulting
   weights are exactly normalized by construction.
+- `ivmodel = "probit"` *(new in 0.2.0)* — probit maximum likelihood,
+  mirroring `kappalate`’s `zmodel(probit)`; available for the weighting
+  estimators (`"ipw"` and the kappa methods of Section 6).
 
 ``` r
 
@@ -324,6 +334,13 @@ coef(drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
             data = drlate_sim, ivmodel = "ipt"))[1]
 #> LATE: D on Y 
 #>    0.4706598
+
+# probit propensity score with a weighting estimator (Section 6)
+coef(drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
+            data = drlate_sim, method = "kappa10",
+            ivmodel = "probit"))[1]
+#> LATE: D on Y 
+#>    0.4738596
 ```
 
 ### LATT: the effect for treated compliers
@@ -342,12 +359,93 @@ coef(drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
 Weights (`weights =`) and clustered standard errors (`cluster =`) are
 available everywhere.
 
-## 6. When the instrument is weak: Fieller confidence sets
+## 6. Abadie’s kappa: the weighting-estimator menu *(new in 0.2.0)*
+
+The companion paper Słoczyński, Uysal, and Wooldridge (2025) studies the
+family of pure weighting estimators of the LATE motivated by Abadie’s
+(2003) kappa theorem. These use *only* the instrument propensity score —
+no outcome or treatment regressions — and differ in which kappa weights
+they use and whether the weights are normalized. `drlate` implements the
+full menu of the authors’ Stata command `kappalate`:
+
+| `method`                      | kappalate name | Weighting                   |
+|-------------------------------|----------------|-----------------------------|
+| `"kappa"`                     | `tau_a`        | unnormalized Abadie kappa   |
+| `"ipw"`, `normalized = FALSE` | `tau_a,1`      | unnormalized, treated-arm   |
+| `"kappa0"`                    | `tau_a,0`      | unnormalized, untreated-arm |
+| `"kappa10"`                   | `tau_a,10`     | normalized Abadie kappa     |
+| `"ipw"` (default normalized)  | `tau_u`        | normalized (Hájek)          |
+
+Because the kappa methods carry no outcome or treatment model, the first
+two formulas must be intercept-only, and that makes the whole menu a
+like-for-like comparison (every row adjusts for covariates only through
+the instrument propensity score):
+
+``` r
+
+cmp_w <- drlate_compare(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
+                        data = drlate_sim,
+                        methods = c("ipw", "kappa", "kappa0", "kappa10"))
+cmp_w
+#> Estimator comparison (LATE)
+#> 
+#>  estimator estimate     se           95% CI
+#>  ipw (nrm)   0.4741 0.0793 [0.3187, 0.6295]
+#>      kappa   0.4731 0.0800 [0.3164, 0.6298]
+#>     kappa0   0.4733 0.0803 [0.3159, 0.6306]
+#>    kappa10   0.4740 0.0793 [0.3186, 0.6294]
+```
+
+All four sit on top of each other here — a healthy design. The paper’s
+main practical lesson is *which* of these to trust when they disagree:
+the **normalized** estimators (`tau_u`, i.e. `method = "ipw"`, and
+`tau_a,10`), because the unnormalized variants are sensitive to the
+location and scale of the outcome. You can see that sensitivity
+directly. Shift the outcome by a constant, which should not change a
+treatment effect:
+
+``` r
+
+d_shift <- transform(drlate_sim, lwage = lwage + 100)
+rbind(
+  kappa10 = c(original = coef(drlate(lwage ~ 1, nvstat ~ 1,
+                                     rsncode ~ age + educ,
+                                     data = drlate_sim,
+                                     method = "kappa10"))[[1]],
+              shifted = coef(drlate(lwage ~ 1, nvstat ~ 1,
+                                    rsncode ~ age + educ,
+                                    data = d_shift,
+                                    method = "kappa10"))[[1]]),
+  kappa   = c(original = coef(drlate(lwage ~ 1, nvstat ~ 1,
+                                     rsncode ~ age + educ,
+                                     data = drlate_sim,
+                                     method = "kappa"))[[1]],
+              shifted = coef(drlate(lwage ~ 1, nvstat ~ 1,
+                                    rsncode ~ age + educ,
+                                    data = d_shift,
+                                    method = "kappa"))[[1]])
+)
+#>          original   shifted
+#> kappa10 0.4740434 0.4740434
+#> kappa   0.4731112 0.4242734
+```
+
+The normalized `kappa10` is exactly invariant; the unnormalized `kappa`
+moves. (The package prints each estimator’s `kappalate` name so the
+mapping above is always visible in the output.)
+
+Unlike the Stata command, all of drlate’s inference machinery applies to
+the kappa menu: cluster-robust standard errors, sampling weights, the
+bootstrap, and Fieller confidence sets for `"kappa"` and `"kappa0"`
+(`"kappa10"` is a difference of two ratios, for which no Fieller pivot
+exists, so use the bootstrap there).
+
+## 7. When the instrument is weak: Fieller confidence sets
 
 The LATE is a ratio, and ratios with imprecise denominators behave
 badly: the usual (delta-method) confidence interval can have
 far-from-nominal coverage when the first stage is weak. The package
-watches for this — whenever the first-stage F drops below 10, the
+watches for this: whenever the first-stage F drops below 10, the
 printout flags it and shows a **Fieller confidence set** alongside.
 
 The Fieller set inverts the test of $`H_0:\ \text{num} - t \cdot
@@ -393,12 +491,13 @@ confint(fit, method = "fieller")     # strong instrument: ~ Wald interval
 #>   [0.3131, 0.6239]
 ```
 
-In the package’s Monte Carlo validation, at first-stage F ≈ 2.5 the
-Fieller set covered the true LATE 95.5% of the time (reporting an
-unbounded set in two-thirds of replications — the statistically honest
-answer) while the Wald interval degenerated.
+In the package’s Monte Carlo validation, under a very weak first stage
+(about 4% compliers) the Fieller set covered the true LATE 95.7% of the
+time — reporting an unbounded set in roughly 40% of replications, the
+statistically honest answer — while the Wald interval over-covered at
+99.3%, conveying a precision it did not have.
 
-## 7. Bootstrap inference
+## 8. Bootstrap inference
 
 The paper notes that inference is straightforward “both analytically and
 using the nonparametric bootstrap.” The analytic sandwich is the
@@ -435,7 +534,7 @@ resampled. Draws that fail — degenerate resamples, overlap violations —
 are dropped and counted; a non-trivial failure rate is itself a sign of
 weak identification, in which case prefer the Fieller set.
 
-## 8. How much does the estimator choice matter?
+## 9. How much does the estimator choice matter?
 
 Referees routinely ask for this table. One call runs all four
 estimators:
@@ -461,13 +560,13 @@ plot(cmp)
 
 A caveat printed in the documentation bears repeating: IPW carries no
 outcome/treatment regressions and RA no propensity score, so those rows
-necessarily use reduced specifications — the IPWRA-vs-AIPW pair is the
+necessarily use reduced specifications. The IPWRA-vs-AIPW pair is the
 like-for-like doubly robust comparison. Here all four agree closely,
 which is what a healthy design looks like.
 
-## 9. Do you even need the instrument? The DR Hausman test
+## 10. Do you even need the instrument? The DR Hausman test
 
-The paper’s Section 5 proposes a specification test that the Stata
+The 2022 paper’s Section 5 proposes a specification test that the Stata
 package does not implement. The logic: under **one-sided noncompliance**
 (nobody gets the treatment without the instrument), the LATT estimated
 *through the instrument* and the ATT estimated *assuming the treatment
@@ -502,7 +601,7 @@ dr_hausman(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
 
 The unconfoundedness-based ATT (≈ 0.63) is biased upward by exactly the
 selection the DGP builds in, while the instrument-based LATT (≈ 0.38 in
-this one-sided subpopulation) is protected; the difference is six
+this one-sided subpopulation) is protected. The difference is almost six
 standard errors from zero. In practice: a rejection says the controls
 alone do not suffice — you needed the instrument; a non-rejection says
 the controls may suffice, and the much more precise
@@ -514,7 +613,7 @@ accounted for — the construction the paper sketches and this package
 carries out. (In Monte Carlo under a true null the test rejects at 4.7%
 for a nominal 5% level.)
 
-## 10. Coming from Stata
+## 11. Coming from Stata
 
 | Stata | R |
 |----|----|
@@ -526,18 +625,27 @@ for a nominal 5% level.)
 | `[pw = w]` | `weights = "w"` |
 | `, vce(cluster id)` | `cluster = "id"` |
 | `i.educ` factor syntax | a [`factor()`](https://rdrr.io/r/base/factor.html) column in the formula |
+| `kappalate y (d = z) x` (tau_a) | `method = "kappa"` |
+| `kappalate ..., which(all)` (tau_a,0 / tau_a,10) | `method = "kappa0"` / `"kappa10"` |
+| `kappalate ...` (tau_u / tau_a,1) | `method = "ipw"` / `"ipw", normalized = FALSE` |
+| `kappalate ..., zmodel(cbps)` | `ivmodel = "cbps"` |
+| `kappalate ..., zmodel(probit)` | `ivmodel = "probit"` |
 | — | [`plot()`](https://rdrr.io/r/graphics/plot.default.html), [`balance()`](https://kvenkita.github.io/drlate/reference/balance.md), `confint(method = "fieller")`, `vcov = "bootstrap"`, [`dr_hausman()`](https://kvenkita.github.io/drlate/reference/dr_hausman.md), [`drlate_compare()`](https://kvenkita.github.io/drlate/reference/drlate_compare.md) (R only) |
 
-Point estimates and standard errors agree with the Stata package to
+Point estimates and standard errors agree with the Stata packages to
 numerical precision; the package’s test suite enforces this against
-fixtures generated by Stata on the SIPP extract used in the original
-help file.
+fixtures generated by Stata’s `drlate` *and* `kappalate` on the Survey
+of Income and Program Participation (SIPP) extract used in the original
+help files.
 
 ## References
 
 - Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2022). “Doubly
   Robust Estimation of Local Average Treatment Effects Using Inverse
   Probability Weighted Regression Adjustment.” arXiv:2208.01300.
+- Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2025). “Abadie’s
+  Kappa and Weighting Estimators of the Local Average Treatment Effect.”
+  *Journal of Business & Economic Statistics* 43(1), 164–177.
 - Imbens, G. W., and J. D. Angrist (1994). “Identification and
   Estimation of Local Average Treatment Effects.” *Econometrica* 62(2),
   467–475.

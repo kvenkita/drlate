@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">drlate</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,14 +71,18 @@
     
 <p>This primer explains, with as little formalism as possible, what the
 estimators in <code>drlate</code> do and when you would want them. It is
-a companion to Słoczyński, Uysal, and Wooldridge (2022), <em>“Doubly
-Robust Estimation of Local Average Treatment Effects Using Inverse
-Probability Weighted Regression Adjustment”</em> (arXiv:2208.01300).
-Like the original Stata command of the same name, this package
-implements the paper’s method. Along the way it demonstrates every tool
-in the package: estimation, diagnostics, weak-instrument-robust
-inference, the bootstrap, the estimator comparison, and the doubly
-robust Hausman test.</p>
+a companion to two papers by Słoczyński, Uysal, and Wooldridge:
+<em>“Doubly Robust Estimation of Local Average Treatment Effects Using
+Inverse Probability Weighted Regression Adjustment”</em> (2022,
+arXiv:2208.01300), whose estimators the authors’ Stata command
+<code>drlate</code> implements, and <em>“Abadie’s Kappa and Weighting
+Estimators of the Local Average Treatment Effect”</em> (2025,
+<em>JBES</em>), whose estimator menu their command
+<code>kappalate</code> implements. This package implements both papers
+behind one interface. Along the way the primer demonstrates every tool
+in the package: estimation, the weighting-estimator menu, diagnostics,
+weak-instrument-robust inference, the bootstrap, the estimator
+comparison, and the doubly robust Hausman test.</p>
 <div class="section level2">
 <h2 id="the-problem-a-treatment-people-choose">1. The problem: a treatment people choose<a class="anchor" aria-label="anchor" href="#the-problem-a-treatment-people-choose"></a>
 </h2>
@@ -88,9 +92,9 @@ robust Hausman test.</p>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Y</mi><annotation encoding="application/x-tex">Y</annotation></semantics></math>
 (wages, savings). People <em>choose</em> whether to take the treatment,
 and the ones who take it differ from the ones who don’t in ways you
-can’t fully observe. Comparing treated and untreated outcomes — even
-with regression controls — confounds the effect of the treatment with
-the effect of being the kind of person who takes it.</p>
+can’t fully observe. Comparing treated and untreated outcomes, even with
+regression controls, confounds the effect of the treatment with the
+effect of being the kind of person who takes it.</p>
 <p>The classic escape is an <strong>instrument</strong>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Z</mi><annotation encoding="application/x-tex">Z</annotation></semantics></math>:
 a binary variable that shifts the <em>likelihood</em> of treatment but
@@ -119,24 +123,26 @@ college is exogenous <em>given</em> family background and region; a
 draft lottery is clean, but conditioning on covariates still buys
 precision. So in practice you need the instrument to be
 as-good-as-random <strong>conditional on covariates
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math></strong>
-— and then both the numerator and the denominator above become
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math></strong>,
+and then both the numerator and the denominator above become
 covariate-adjusted contrasts. How exactly to adjust them is the entire
-subject of the paper and this package.</p>
+subject of the 2022 paper and this package.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="the-four-estimators-in-one-picture">2. The four estimators in one picture<a class="anchor" aria-label="anchor" href="#the-four-estimators-in-one-picture"></a>
+<h2 id="the-four-core-estimators-in-one-picture">2. The four core estimators in one picture<a class="anchor" aria-label="anchor" href="#the-four-core-estimators-in-one-picture"></a>
 </h2>
-<p>All four estimators in <code>drlate</code> build the same ratio; they
+<p>All estimators in <code>drlate</code> build the same ratio; they
 differ only in how each piece is adjusted for
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>.
-Each piece is an “effect of
+This section covers the four regression-and-weighting strategies from
+the 2022 paper; a second family, the Abadie-kappa weighting menu from
+the 2025 paper, appears in Section 6. Each piece is an “effect of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Z</mi><annotation encoding="application/x-tex">Z</annotation></semantics></math>
-on something” — a problem formally identical to estimating an average
+on something”, a problem formally identical to estimating an average
 treatment effect of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Z</mi><annotation encoding="application/x-tex">Z</annotation></semantics></math>
-under unconfoundedness — so the familiar treatment-effects toolbox
+under unconfoundedness, so the familiar treatment-effects toolbox
 applies:</p>
 <table class="table">
 <colgroup>
@@ -199,7 +205,7 @@ predicted probability of 1.3, a negative count. IPWRA achieves it by
 <em>reweighting a quasi-likelihood regression</em>, so as long as you
 choose a sensible family (logit for binary outcomes, Poisson for
 counts), fitted values stay in range by construction. Hence IPWRA’s
-appealing small-sample behavior in the paper’s simulations — and its
+appealing small-sample behavior in the paper’s simulations, and its
 place as the package default.</p>
 <p>A second practical lesson from the paper concerns
 <strong>normalization</strong>. Raw IPW weights
@@ -207,9 +213,9 @@ place as the package default.</p>
 need not average to one in a sample; if a few observations have small
 estimated propensity scores, unnormalized estimators can be erratic.
 Normalizing the weights to sum to one (the Hájek construction) fixes
-this and costs nothing, so <code>normalized = TRUE</code> is the default
-— it matters only for <code>"ipw"</code> and <code>"aipw"</code>; IPWRA
-is normalized by construction.</p>
+this and costs nothing, so <code>normalized = TRUE</code> is the
+default. It matters only for <code>"ipw"</code> and <code>"aipw"</code>;
+IPWRA is normalized by construction.</p>
 </div>
 </div>
 <div class="section level2">
@@ -296,15 +302,15 @@ compliers. The 95% interval comfortably covers the true 0.5.</li>
 </ul>
 <p>The final line reports <strong>first-stage strength</strong>: with a
 single binary instrument, the squared z-statistic is the first-stage
-robust F. Here F ≈ 1084 — far above the conventional F = 10 danger
-threshold — so Wald inference on the ratio is trustworthy. Section 6
+robust F. Here F ≈ 1084, far above the conventional F = 10 danger
+threshold, so Wald inference on the ratio is trustworthy. Section 7
 shows what the package does when it isn’t.</p>
-<p>The standard errors here are not an afterthought: every estimation
-stage (the propensity score, both outcome regressions, both treatment
-regressions, and the ratio itself) is stacked into one moment system and
-a joint sandwich variance is computed. The uncertainty from estimating
-the propensity score propagates into the LATE’s standard error, exactly
-as in the Stata original.</p>
+<p>The standard errors here are not an afterthought: drlate stacks every
+estimation stage (the propensity score, both outcome regressions, both
+treatment regressions, and the ratio itself) into one moment system and
+computes a joint sandwich variance. The uncertainty from estimating the
+propensity score propagates into the LATE’s standard error, exactly as
+in the Stata original.</p>
 </div>
 <div class="section level3">
 <h3 id="seeing-double-robustness-work">Seeing double robustness work<a class="anchor" aria-label="anchor" href="#seeing-double-robustness-work"></a>
@@ -421,12 +427,24 @@ instrument arms.</li>
 <code>ivmodel = "ipt"</code> — inverse probability tilting (Graham,
 Pinto, and Egel 2012): fits a separate tilted score per arm; the
 resulting weights are exactly normalized by construction.</li>
+<li>
+<code>ivmodel = "probit"</code> <em>(new in 0.2.0)</em> — probit
+maximum likelihood, mirroring <code>kappalate</code>’s
+<code>zmodel(probit)</code>; available for the weighting estimators
+(<code>"ipw"</code> and the kappa methods of Section 6).</li>
 </ul>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="../reference/drlate.html">drlate</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
 <span>            data <span class="op">=</span> <span class="va">drlate_sim</span>, ivmodel <span class="op">=</span> <span class="st">"ipt"</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="co">#&gt; LATE: D on Y </span></span>
-<span><span class="co">#&gt;    0.4706598</span></span></code></pre></div>
+<span><span class="co">#&gt;    0.4706598</span></span>
+<span></span>
+<span><span class="co"># probit propensity score with a weighting estimator (Section 6)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="../reference/drlate.html">drlate</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="fl">1</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="fl">1</span>, <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
+<span>            data <span class="op">=</span> <span class="va">drlate_sim</span>, method <span class="op">=</span> <span class="st">"kappa10"</span>,</span>
+<span>            ivmodel <span class="op">=</span> <span class="st">"probit"</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span><span class="co">#&gt; LATE: D on Y </span></span>
+<span><span class="co">#&gt;    0.4738596</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="latt-the-effect-for-treated-compliers">LATT: the effect for treated compliers<a class="anchor" aria-label="anchor" href="#latt-the-effect-for-treated-compliers"></a>
@@ -444,12 +462,123 @@ do?”:</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="when-the-instrument-is-weak-fieller-confidence-sets">6. When the instrument is weak: Fieller confidence sets<a class="anchor" aria-label="anchor" href="#when-the-instrument-is-weak-fieller-confidence-sets"></a>
+<h2 id="abadies-kappa-the-weighting-estimator-menu-new-in-0-2-0">6. Abadie’s kappa: the weighting-estimator menu <em>(new in
+0.2.0)</em><a class="anchor" aria-label="anchor" href="#abadies-kappa-the-weighting-estimator-menu-new-in-0-2-0"></a>
+</h2>
+<p>The companion paper Słoczyński, Uysal, and Wooldridge (2025) studies
+the family of pure weighting estimators of the LATE motivated by
+Abadie’s (2003) kappa theorem. These use <em>only</em> the instrument
+propensity score — no outcome or treatment regressions — and differ in
+which kappa weights they use and whether the weights are normalized.
+<code>drlate</code> implements the full menu of the authors’ Stata
+command <code>kappalate</code>:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th><code>method</code></th>
+<th>kappalate name</th>
+<th>Weighting</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>"kappa"</code></td>
+<td><code>tau_a</code></td>
+<td>unnormalized Abadie kappa</td>
+</tr>
+<tr class="even">
+<td>
+<code>"ipw"</code>, <code>normalized = FALSE</code>
+</td>
+<td><code>tau_a,1</code></td>
+<td>unnormalized, treated-arm</td>
+</tr>
+<tr class="odd">
+<td><code>"kappa0"</code></td>
+<td><code>tau_a,0</code></td>
+<td>unnormalized, untreated-arm</td>
+</tr>
+<tr class="even">
+<td><code>"kappa10"</code></td>
+<td><code>tau_a,10</code></td>
+<td>normalized Abadie kappa</td>
+</tr>
+<tr class="odd">
+<td>
+<code>"ipw"</code> (default normalized)</td>
+<td><code>tau_u</code></td>
+<td>normalized (Hájek)</td>
+</tr>
+</tbody>
+</table>
+<p>Because the kappa methods carry no outcome or treatment model, the
+first two formulas must be intercept-only, and that makes the whole menu
+a like-for-like comparison (every row adjusts for covariates only
+through the instrument propensity score):</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cmp_w</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drlate_compare.html">drlate_compare</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="fl">1</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="fl">1</span>, <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
+<span>                        data <span class="op">=</span> <span class="va">drlate_sim</span>,</span>
+<span>                        methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ipw"</span>, <span class="st">"kappa"</span>, <span class="st">"kappa0"</span>, <span class="st">"kappa10"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">cmp_w</span></span>
+<span><span class="co">#&gt; Estimator comparison (LATE)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;  estimator estimate     se           95% CI</span></span>
+<span><span class="co">#&gt;  ipw (nrm)   0.4741 0.0793 [0.3187, 0.6295]</span></span>
+<span><span class="co">#&gt;      kappa   0.4731 0.0800 [0.3164, 0.6298]</span></span>
+<span><span class="co">#&gt;     kappa0   0.4733 0.0803 [0.3159, 0.6306]</span></span>
+<span><span class="co">#&gt;    kappa10   0.4740 0.0793 [0.3186, 0.6294]</span></span></code></pre></div>
+<p>All four sit on top of each other here — a healthy design. The
+paper’s main practical lesson is <em>which</em> of these to trust when
+they disagree: the <strong>normalized</strong> estimators
+(<code>tau_u</code>, i.e. <code>method = "ipw"</code>, and
+<code>tau_a,10</code>), because the unnormalized variants are sensitive
+to the location and scale of the outcome. You can see that sensitivity
+directly. Shift the outcome by a constant, which should not change a
+treatment effect:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">d_shift</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">drlate_sim</span>, lwage <span class="op">=</span> <span class="va">lwage</span> <span class="op">+</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  kappa10 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>original <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="../reference/drlate.html">drlate</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="fl">1</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="fl">1</span>,</span>
+<span>                                     <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
+<span>                                     data <span class="op">=</span> <span class="va">drlate_sim</span>,</span>
+<span>                                     method <span class="op">=</span> <span class="st">"kappa10"</span><span class="op">)</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>              shifted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="../reference/drlate.html">drlate</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="fl">1</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="fl">1</span>,</span>
+<span>                                    <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
+<span>                                    data <span class="op">=</span> <span class="va">d_shift</span>,</span>
+<span>                                    method <span class="op">=</span> <span class="st">"kappa10"</span><span class="op">)</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>  kappa   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>original <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="../reference/drlate.html">drlate</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="fl">1</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="fl">1</span>,</span>
+<span>                                     <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
+<span>                                     data <span class="op">=</span> <span class="va">drlate_sim</span>,</span>
+<span>                                     method <span class="op">=</span> <span class="st">"kappa"</span><span class="op">)</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>              shifted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="../reference/drlate.html">drlate</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="fl">1</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="fl">1</span>,</span>
+<span>                                    <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
+<span>                                    data <span class="op">=</span> <span class="va">d_shift</span>,</span>
+<span>                                    method <span class="op">=</span> <span class="st">"kappa"</span><span class="op">)</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt;          original   shifted</span></span>
+<span><span class="co">#&gt; kappa10 0.4740434 0.4740434</span></span>
+<span><span class="co">#&gt; kappa   0.4731112 0.4242734</span></span></code></pre></div>
+<p>The normalized <code>kappa10</code> is exactly invariant; the
+unnormalized <code>kappa</code> moves. (The package prints each
+estimator’s <code>kappalate</code> name so the mapping above is always
+visible in the output.)</p>
+<p>Unlike the Stata command, all of drlate’s inference machinery applies
+to the kappa menu: cluster-robust standard errors, sampling weights, the
+bootstrap, and Fieller confidence sets for <code>"kappa"</code> and
+<code>"kappa0"</code> (<code>"kappa10"</code> is a difference of two
+ratios, for which no Fieller pivot exists, so use the bootstrap
+there).</p>
+</div>
+<div class="section level2">
+<h2 id="when-the-instrument-is-weak-fieller-confidence-sets">7. When the instrument is weak: Fieller confidence sets<a class="anchor" aria-label="anchor" href="#when-the-instrument-is-weak-fieller-confidence-sets"></a>
 </h2>
 <p>The LATE is a ratio, and ratios with imprecise denominators behave
 badly: the usual (delta-method) confidence interval can have
 far-from-nominal coverage when the first stage is weak. The package
-watches for this — whenever the first-stage F drops below 10, the
+watches for this: whenever the first-stage F drops below 10, the
 printout flags it and shows a <strong>Fieller confidence set</strong>
 alongside.</p>
 <p>The Fieller set inverts the test of
@@ -462,7 +591,7 @@ the honest price that it may be <strong>unbounded</strong> when the data
 barely identify the ratio.</p>
 <p>Watch it engage on a deliberately broken design (instrument shuffled
 at random in a small subsample, so the true first stage is zero):</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">d_weak</span> <span class="op">&lt;-</span> <span class="va">drlate_sim</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">300</span>, <span class="op">]</span></span>
 <span><span class="va">d_weak</span><span class="op">$</span><span class="va">zweak</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">d_weak</span><span class="op">$</span><span class="va">rsncode</span><span class="op">)</span></span>
@@ -484,23 +613,24 @@ at random in a small subsample, so the true first stage is zero):</p>
 <span><span class="co">#&gt; First stage (Z on D): z = -0.1124 (z^2 ~ first-stage F = 0.0126)  [weak: Wald inference on the ratio may be unreliable]</span></span>
 <span><span class="co">#&gt; Fieller 95% confidence set for the late: (-Inf, Inf) - the first stage is uninformative</span></span></code></pre></div>
 <p>The Fieller set is available on demand for any fit:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span>, method <span class="op">=</span> <span class="st">"fieller"</span><span class="op">)</span>     <span class="co"># strong instrument: ~ Wald interval</span></span>
 <span><span class="co">#&gt; Fieller 95% confidence set for LATE: D on Y:</span></span>
 <span><span class="co">#&gt;   [0.3131, 0.6239]</span></span></code></pre></div>
-<p>In the package’s Monte Carlo validation, at first-stage F ≈ 2.5 the
-Fieller set covered the true LATE 95.5% of the time (reporting an
-unbounded set in two-thirds of replications — the statistically honest
-answer) while the Wald interval degenerated.</p>
+<p>In the package’s Monte Carlo validation, under a very weak first
+stage (about 4% compliers) the Fieller set covered the true LATE 95.7%
+of the time — reporting an unbounded set in roughly 40% of replications,
+the statistically honest answer — while the Wald interval over-covered
+at 99.3%, conveying a precision it did not have.</p>
 </div>
 <div class="section level2">
-<h2 id="bootstrap-inference">7. Bootstrap inference<a class="anchor" aria-label="anchor" href="#bootstrap-inference"></a>
+<h2 id="bootstrap-inference">8. Bootstrap inference<a class="anchor" aria-label="anchor" href="#bootstrap-inference"></a>
 </h2>
 <p>The paper notes that inference is straightforward “both analytically
 and using the nonparametric bootstrap.” The analytic sandwich is the
 default; the bootstrap re-runs the entire estimation pipeline (including
 the propensity score) on each resample:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_boot</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drlate.html">drlate</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
 <span>                   <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, data <span class="op">=</span> <span class="va">drlate_sim</span>,</span>
 <span>                   vcov <span class="op">=</span> <span class="st">"bootstrap"</span>, boot_reps <span class="op">=</span> <span class="fl">199</span>, boot_seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
@@ -529,11 +659,11 @@ itself a sign of weak identification, in which case prefer the Fieller
 set.</p>
 </div>
 <div class="section level2">
-<h2 id="how-much-does-the-estimator-choice-matter">8. How much does the estimator choice matter?<a class="anchor" aria-label="anchor" href="#how-much-does-the-estimator-choice-matter"></a>
+<h2 id="how-much-does-the-estimator-choice-matter">9. How much does the estimator choice matter?<a class="anchor" aria-label="anchor" href="#how-much-does-the-estimator-choice-matter"></a>
 </h2>
 <p>Referees routinely ask for this table. One call runs all four
 estimators:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cmp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drlate_compare.html">drlate_compare</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
 <span>                      <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, data <span class="op">=</span> <span class="va">drlate_sim</span><span class="op">)</span></span>
 <span><span class="co">#&gt; method = "ipw": dropping outcome/treatment covariates (weighted means only).</span></span>
@@ -550,15 +680,15 @@ estimators:</p>
 <p><img src="drlate-primer_files/figure-html/compare-1.png" class="r-plt" alt="" width="100%"></p>
 <p>A caveat printed in the documentation bears repeating: IPW carries no
 outcome/treatment regressions and RA no propensity score, so those rows
-necessarily use reduced specifications — the IPWRA-vs-AIPW pair is the
+necessarily use reduced specifications. The IPWRA-vs-AIPW pair is the
 like-for-like doubly robust comparison. Here all four agree closely,
 which is what a healthy design looks like.</p>
 </div>
 <div class="section level2">
-<h2 id="do-you-even-need-the-instrument-the-dr-hausman-test">9. Do you even need the instrument? The DR Hausman test<a class="anchor" aria-label="anchor" href="#do-you-even-need-the-instrument-the-dr-hausman-test"></a>
+<h2 id="do-you-even-need-the-instrument-the-dr-hausman-test">10. Do you even need the instrument? The DR Hausman test<a class="anchor" aria-label="anchor" href="#do-you-even-need-the-instrument-the-dr-hausman-test"></a>
 </h2>
-<p>The paper’s Section 5 proposes a specification test that the Stata
-package does not implement. The logic: under <strong>one-sided
+<p>The 2022 paper’s Section 5 proposes a specification test that the
+Stata package does not implement. The logic: under <strong>one-sided
 noncompliance</strong> (nobody gets the treatment without the
 instrument), the LATT estimated <em>through the instrument</em> and the
 ATT estimated <em>assuming the treatment is unconfounded given
@@ -570,7 +700,7 @@ comparison survives heterogeneous treatment effects.</p>
 <p>The simulated data are built with confounded treatment (always-takers
 have higher baseline wages), so after imposing one-sided noncompliance
 the test should — and does — reject:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d_os</span> <span class="op">&lt;-</span> <span class="va">drlate_sim</span></span>
 <span><span class="va">d_os</span><span class="op">$</span><span class="va">nvstat</span><span class="op">[</span><span class="va">d_os</span><span class="op">$</span><span class="va">rsncode</span> <span class="op">==</span> <span class="fl">0</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0L</span>   <span class="co"># impose one-sided noncompliance</span></span>
 <span></span>
@@ -588,10 +718,10 @@ the test should — and does — reject:</p>
 <span><span class="co">#&gt;  0.3760331  0.6323210 -0.2562878</span></span></code></pre></div>
 <p>The unconfoundedness-based ATT (≈ 0.63) is biased upward by exactly
 the selection the DGP builds in, while the instrument-based LATT (≈ 0.38
-in this one-sided subpopulation) is protected; the difference is six
-standard errors from zero. In practice: a rejection says the controls
-alone do not suffice — you needed the instrument; a non-rejection says
-the controls may suffice, and the much more precise
+in this one-sided subpopulation) is protected. The difference is almost
+six standard errors from zero. In practice: a rejection says the
+controls alone do not suffice — you needed the instrument; a
+non-rejection says the controls may suffice, and the much more precise
 unconfoundedness-based estimator becomes defensible.</p>
 <p>The standard error of the difference is analytic: both estimators’
 moment conditions are stacked into one system so their correlation is
@@ -600,7 +730,7 @@ carries out. (In Monte Carlo under a true null the test rejects at 4.7%
 for a nominal 5% level.)</p>
 </div>
 <div class="section level2">
-<h2 id="coming-from-stata">10. Coming from Stata<a class="anchor" aria-label="anchor" href="#coming-from-stata"></a>
+<h2 id="coming-from-stata">11. Coming from Stata<a class="anchor" aria-label="anchor" href="#coming-from-stata"></a>
 </h2>
 <table class="table">
 <colgroup>
@@ -646,6 +776,34 @@ for a nominal 5% level.)</p>
 <td>a <code><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor()</a></code> column in the formula</td>
 </tr>
 <tr class="odd">
+<td>
+<code>kappalate y (d = z) x</code> (tau_a)</td>
+<td><code>method = "kappa"</code></td>
+</tr>
+<tr class="even">
+<td>
+<code>kappalate ..., which(all)</code> (tau_a,0 / tau_a,10)</td>
+<td>
+<code>method = "kappa0"</code> / <code>"kappa10"</code>
+</td>
+</tr>
+<tr class="odd">
+<td>
+<code>kappalate ...</code> (tau_u / tau_a,1)</td>
+<td>
+<code>method = "ipw"</code> /
+<code>"ipw", normalized = FALSE</code>
+</td>
+</tr>
+<tr class="even">
+<td><code>kappalate ..., zmodel(cbps)</code></td>
+<td><code>ivmodel = "cbps"</code></td>
+</tr>
+<tr class="odd">
+<td><code>kappalate ..., zmodel(probit)</code></td>
+<td><code>ivmodel = "probit"</code></td>
+</tr>
+<tr class="even">
 <td>—</td>
 <td>
 <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>, <code><a href="../reference/balance.html">balance()</a></code>,
@@ -655,10 +813,11 @@ for a nominal 5% level.)</p>
 </tr>
 </tbody>
 </table>
-<p>Point estimates and standard errors agree with the Stata package to
+<p>Point estimates and standard errors agree with the Stata packages to
 numerical precision; the package’s test suite enforces this against
-fixtures generated by Stata on the SIPP extract used in the original
-help file.</p>
+fixtures generated by Stata’s <code>drlate</code> <em>and</em>
+<code>kappalate</code> on the Survey of Income and Program Participation
+(SIPP) extract used in the original help files.</p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -667,6 +826,10 @@ help file.</p>
 <li>Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2022). “Doubly
 Robust Estimation of Local Average Treatment Effects Using Inverse
 Probability Weighted Regression Adjustment.” arXiv:2208.01300.</li>
+<li>Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2025). “Abadie’s
+Kappa and Weighting Estimators of the Local Average Treatment Effect.”
+<em>Journal of Business &amp; Economic Statistics</em> 43(1),
+164–177.</li>
 <li>Imbens, G. W., and J. D. Angrist (1994). “Identification and
 Estimation of Local Average Treatment Effects.” <em>Econometrica</em>
 62(2), 467–475.</li>

@@ -19,8 +19,8 @@ drlate(
   data,
   omodel = c("linear", "logit", "poisson"),
   tmodel = c("logit", "linear", "poisson"),
-  ivmodel = c("logit", "cbps", "ipt"),
-  method = c("ipwra", "ipw", "aipw", "ra"),
+  ivmodel = c("logit", "cbps", "ipt", "probit"),
+  method = c("ipwra", "ipw", "aipw", "ra", "kappa", "kappa0", "kappa10"),
   estimand = c("late", "latt"),
   normalized = TRUE,
   weights = NULL,
@@ -70,13 +70,24 @@ drlate(
 
   Instrument propensity score model: `"logit"` (maximum likelihood;
   default), `"cbps"` (covariate balancing, Imai and Ratkovic 2014; not
-  available with `estimand = "latt"`), or `"ipt"` (inverse probability
-  tilting, Graham, Pinto, and Egel 2012).
+  available with `estimand = "latt"`), `"ipt"` (inverse probability
+  tilting, Graham, Pinto, and Egel 2012), or `"probit"` (maximum
+  likelihood; mirrors kappalate's `zmodel(probit)` and is available only
+  for the weighting estimators that command covers — `"ipw"`, `"kappa"`,
+  `"kappa0"`, `"kappa10"` — with `estimand = "late"`).
 
 - method:
 
   Estimator: `"ipwra"` (inverse-probability-weighted regression
-  adjustment; default), `"ipw"`, `"aipw"`, or `"ra"`.
+  adjustment; default), `"ipw"`, `"aipw"`, `"ra"`, or one of the
+  kappa-weighting estimators of Słoczyński, Uysal, and Wooldridge
+  (2025): `"kappa"` (unnormalized Abadie kappa; kappalate's `tau_a`),
+  `"kappa0"` (untreated-arm kappa; `tau_a,0`), or `"kappa10"`
+  (normalized kappa; `tau_a,10`). The kappa estimators require
+  intercept-only outcome and treatment formulas, a binary treatment, and
+  `estimand = "late"`; `ivmodel = "cbps"` is available for `"kappa"`
+  only, and `"ipt"` for none of them. drlate's normalized and
+  unnormalized `"ipw"` coincide with kappalate's `tau_u` and `tau_a,1`.
 
 - estimand:
 
@@ -158,7 +169,14 @@ An object of class `"drlate"`, a list with components including
 the denominator effect of Z on D), `vcov3` (their variance matrix,
 diagonal by construction, as in the Stata package), `vcov_full` (the
 joint variance matrix of all stacked parameters), `theta` (all stacked
-parameter estimates), `N`, `dmeanz1`, `dmeanz0`, and the call.
+parameter estimates), `N`, `dmeanz1`, `dmeanz0`, and the call. For
+`method = "kappa10"` only the causal estimate is reported (the estimator
+is a difference of two ratios, so no single numerator/denominator pair
+exists). For `"kappa"` and `"kappa0"` the third coefficient is the mean
+of the corresponding kappa weight: under the LATE assumptions it
+estimates the same complier share as the IPW first-stage contrast (the
+population ATE of Z on D), but it is a different sample statistic and
+the two can diverge under propensity score misspecification.
 
 ## References
 
@@ -166,6 +184,11 @@ Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2022). "Doubly Robust
 Estimation of Local Average Treatment Effects Using Inverse Probability
 Weighted Regression Adjustment."
 [doi:10.48550/arXiv.2208.01300](https://doi.org/10.48550/arXiv.2208.01300)
+
+Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2025). "Abadie's
+Kappa and Weighting Estimators of the Local Average Treatment Effect."
+*Journal of Business & Economic Statistics* 43(1), 164–177.
+[doi:10.1080/07350015.2024.2332763](https://doi.org/10.1080/07350015.2024.2332763)
 
 ## Examples
 

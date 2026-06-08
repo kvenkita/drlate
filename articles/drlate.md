@@ -4,54 +4,68 @@
 
 `drlate` estimates the local average treatment effect (LATE) and the
 local average treatment effect on the treated (LATT) from observational
-data with a binary instrument, following Słoczyński, Uysal, and
-Wooldridge (2022). It is a faithful R port of the Stata package `drlate`
-(Statistical Software Components S459708) by the same authors.
+data with a binary instrument. It implements the complete estimator
+suite of Słoczyński, Uysal, and Wooldridge: the doubly robust estimators
+of their 2022 paper (the Stata command `drlate`, Statistical Software
+Components S459708) and the Abadie-kappa weighting estimators of their
+2025 *JBES* paper (the Stata command `kappalate`, S459257), unified
+behind one interface and one inference architecture.
 
 The estimation core supports:
 
-- **Estimators** (`method`): inverse-probability-weighted regression
-  adjustment (`"ipwra"`, the default, doubly robust), inverse
-  probability weighting (`"ipw"`), augmented inverse probability
-  weighting (`"aipw"`, doubly robust), and regression adjustment
-  (`"ra"`).
+- **Doubly robust and regression/weighting estimators** (`method`):
+  inverse-probability-weighted regression adjustment (`"ipwra"`, the
+  default, doubly robust), inverse probability weighting (`"ipw"`),
+  augmented inverse probability weighting (`"aipw"`, doubly robust), and
+  regression adjustment (`"ra"`).
+- **Abadie-kappa weighting estimators** *(new in 0.2.0)*: `"kappa"`
+  (kappalate’s `tau_a`), `"kappa0"` (`tau_a,0`), and `"kappa10"`
+  (`tau_a,10`); together with the two IPW variants (= `tau_u` and
+  `tau_a,1`) these complete the five-estimator menu of the 2025 paper.
 - **Outcome and treatment models**: linear, logistic, or Poisson, so the
   outcome and the treatment may each be continuous, binary, or a count.
 - **Instrument propensity score models** (`ivmodel`): logistic
   regression by maximum likelihood (default), covariate balancing
-  (`"cbps"`, Imai and Ratkovic 2014), or inverse probability tilting
-  (`"ipt"`, Graham, Pinto, and Egel 2012).
+  (`"cbps"`, Imai and Ratkovic 2014), inverse probability tilting
+  (`"ipt"`, Graham, Pinto, and Egel 2012), or probit maximum likelihood
+  (`"probit"`, for the weighting estimators; *new in 0.2.0*).
 - **Normalized** (default) or unnormalized weighting for IPW and AIPW.
 - Sampling weights and cluster-robust standard errors.
 
-Beyond the Stata original, the package adds:
+Beyond the two Stata commands, the package adds a common workflow layer,
+and makes it available on the kappa weighting estimators too, where
+`kappalate` itself offers only robust and cluster-robust standard
+errors:
 
 - **Diagnostics**:
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html) displays of
   propensity-score overlap, covariate balance, and implied weights;
   [`balance()`](https://kvenkita.github.io/drlate/reference/balance.md)
   tables; first-stage strength on every printout.
-- **Weak-instrument-robust inference**: Fieller/Anderson–Rubin
-  confidence sets via `confint(method = "fieller")`.
+- **Weak-instrument-robust inference**: Fieller confidence sets via
+  `confint(method = "fieller")` (for the ratio-form estimators,
+  including `"kappa"` and `"kappa0"`).
 - **Bootstrap inference**: `vcov = "bootstrap"` (cluster-aware,
   parallelizable).
-- **The DR Hausman test** of unconfoundedness from the paper’s Section 5
+- **The DR Hausman test** of unconfoundedness from the 2022 paper’s
+  Section 5
   ([`dr_hausman()`](https://kvenkita.github.io/drlate/reference/dr_hausman.md)),
   with an analytic standard error from a jointly stacked moment system.
 - **Estimator comparison**:
   [`drlate_compare()`](https://kvenkita.github.io/drlate/reference/drlate_compare.md)
   with a dot-whisker plot.
 
-All extensions are validated by Monte Carlo (scripts in `data-raw/` of
-the source repository).
+The estimators are validated against the authors’ Stata commands by
+golden-fixture parity (estimates and standard errors), and the inference
+extensions by Monte Carlo.
 
 ### Joint inference
 
-Point estimates are computed from sequential weighted regressions. For
-inference, the moment conditions of *every* estimation stage — the
-instrument propensity score, the outcome regressions, the treatment
-regressions, and the causal aggregates — are stacked into one
-just-identified M-estimation system, and the variance is the sandwich
+drlate computes point estimates from sequential weighted regressions.
+For inference, it stacks the moment conditions of *every* estimation
+stage — the instrument propensity score, the outcome regressions, the
+treatment regressions, and the causal aggregates — into one
+just-identified M-estimation system; the variance is the sandwich
 $`A^{-1} B A^{-\top} / n`$ evaluated at the estimates. This reproduces
 the Stata package’s `gmm, onestep iterate(0)` construction: standard
 errors account for the estimation uncertainty of each stage, including
@@ -134,7 +148,7 @@ drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
 #> 
 #> Local average treatment effect
 #> Number of obs    : 2,000
-#> Estimator        : IPW (normalized)
+#> Estimator        : IPW (normalized; kappalate tau_u)
 #> Outcome model    : weighted mean
 #> Treatment model  : weighted mean
 #> Instrument model : logit (MLE)
@@ -163,6 +177,40 @@ drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ 1,
 #> ATE: Z on D    0.6053    0.01833  33.011 5.685e-239     0.5693    0.6412
 #> 
 #> First stage (Z on D): z = 33.01 (z^2 ~ first-stage F = 1090)
+```
+
+### Abadie-kappa weighting estimators *(new in 0.2.0)*
+
+The kappa methods are pure weighting estimators — covariates enter only
+through the instrument propensity score, so the outcome and treatment
+formulas are intercept-only. The printed output shows each estimator’s
+`kappalate` name:
+
+``` r
+
+# Normalized Abadie kappa (kappalate tau_a,10); reports the LATE only,
+# since the estimator is a difference of two ratios
+drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
+       data = drlate_sim, method = "kappa10")
+#> 
+#> Local average treatment effect
+#> Number of obs    : 2,000
+#> Estimator        : KAPPA10 (tau_a,10; normalized Abadie kappa weighting)
+#> Outcome model    : none (kappa weighting)
+#> Treatment model  : none (kappa weighting)
+#> Instrument model : logit (MLE)
+#> 
+#>              Estimate Std. Error z value  Pr(>|z|) [95% conf. interval]
+#> LATE: D on Y    0.474    0.07929   5.979 2.249e-09     0.3186    0.6294
+#> 
+#> First stage (Z on D): z = 32.75 (z^2 ~ first-stage F = 1072)
+
+# Unnormalized Abadie kappa (tau_a); Fieller sets available
+fit_k <- drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age + educ,
+                data = drlate_sim, method = "kappa")
+confint(fit_k, method = "fieller")
+#> Fieller 95% confidence set for LATE: D on Y:
+#>   [0.3142, 0.6282]
 ```
 
 ### LATT, other model families, and IPT
@@ -294,8 +342,9 @@ confint(fit_b)
 Under one-sided noncompliance (nobody takes the treatment without the
 instrument), the instrument-based LATT equals the unconfoundedness-based
 ATT if treatment assignment is unconfounded given the covariates.
-Section 5 of the paper turns this equality into a heterogeneity-robust
-Hausman test, implemented here; the Stata package does not provide it:
+Section 5 of the 2022 paper turns this equality into a
+heterogeneity-robust Hausman test, implemented here; the Stata package
+does not provide it:
 
 ``` r
 
@@ -341,8 +390,8 @@ plot(cmp)
 
 ## Replicating the Stata examples
 
-The Stata help file’s examples use a public SIPP extract. The equivalent
-R calls are:
+The Stata help file’s examples use a public extract from the Survey of
+Income and Program Participation (SIPP). The equivalent R calls are:
 
 ``` r
 
@@ -357,21 +406,35 @@ drlate(lwage ~ age_5, nvstat ~ age_5, rsncode ~ age_5, data = sipp)
 # Stata: drlate (lwage age_5) (nvstat age_5) (rsncode age_5, ipt), latt
 drlate(lwage ~ age_5, nvstat ~ age_5, rsncode ~ age_5, data = sipp,
        ivmodel = "ipt", estimand = "latt")
+
+# Stata: kappalate lwage (nvstat = rsncode) age_5, zmodel(logit) which(all)
+drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age_5, data = sipp,
+       method = "kappa")     # tau_a; likewise "kappa0", "kappa10",
+                             # and method = "ipw" for tau_u / tau_a,1
+
+# Stata: kappalate lwage (nvstat = rsncode) age_5, zmodel(probit)
+drlate(lwage ~ 1, nvstat ~ 1, rsncode ~ age_5, data = sipp,
+       method = "kappa", ivmodel = "probit")
 ```
 
 The package’s test suite verifies numerical equivalence of estimates and
-standard errors against fixtures generated by the Stata package on this
-dataset (see `inst/stata/make-fixtures.do`).
+standard errors against fixtures generated by both Stata commands on
+this dataset (see `inst/stata/make-fixtures.do` and
+`inst/stata/make-kappalate-fixtures.do`).
 
 ## Citation
 
-If you use drlate in your research, please cite both the R package and
-the original Stata module it implements (see `citation("drlate")` for
-BibTeX entries):
+If you use drlate in your research, please cite the R package, the
+methodological paper for the estimators you use, and the original Stata
+module (see `citation("drlate")` for BibTeX entries):
 
 > Venkitasubramanian, K. (2026). drlate: Doubly Robust Estimation of the
-> Local Average Treatment Effect in R. R package version 0.1.0.
+> Local Average Treatment Effect in R. R package version 0.2.0.
 > <https://github.com/kvenkita/drlate>
+
+> Słoczyński, T., Uysal, S. D., & Wooldridge, J. M. (2025). Abadie’s
+> Kappa and Weighting Estimators of the Local Average Treatment Effect.
+> *Journal of Business & Economic Statistics* 43(1), 164–177.
 
 > Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2026). DRLATE: Stata
 > module to perform doubly robust estimation of the local average
@@ -384,6 +447,17 @@ BibTeX entries):
 - Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2022). “Doubly
   Robust Estimation of Local Average Treatment Effects Using Inverse
   Probability Weighted Regression Adjustment.” arXiv:2208.01300.
+- Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2025). “Abadie’s
+  Kappa and Weighting Estimators of the Local Average Treatment Effect.”
+  *Journal of Business & Economic Statistics* 43(1), 164–177.
+- Abadie, A. (2003). “Semiparametric Instrumental Variable Estimation of
+  Treatment Response Models.” *Journal of Econometrics* 113(2), 231–263.
+- Donald, S. G., Y.-C. Hsu, and R. P. Lieli (2014). “Testing the
+  Unconfoundedness Assumption via Inverse Probability Weighted
+  Estimators of (L)ATT.” *Journal of Business & Economic Statistics*
+  32(3), 395–415.
+- Fieller, E. C. (1954). “Some Problems in Interval Estimation.”
+  *JRSS-B* 16(2), 175–185.
 - Graham, B. S., C. C. de Xavier Pinto, and D. Egel (2012). “Inverse
   Probability Tilting for Moment Condition Models with Missing Data.”
   *Review of Economic Studies* 79(3), 1053–1079.

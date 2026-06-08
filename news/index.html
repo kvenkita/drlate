@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">drlate</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,14 @@
       <small>Source: <a href="https://github.com/kvenkita/drlate/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0" id="drlate-020">drlate 0.2.0<a class="anchor" aria-label="anchor" href="#drlate-020"></a></h2>
+<ul><li>New kappa-weighting estimators of the LATE from Słoczyński, Uysal, and Wooldridge (2025, <em>JBES</em> 43(1), 164-177): <code>method = "kappa"</code> (tau_a), <code>"kappa0"</code> (tau_a,0), and <code>"kappa10"</code> (tau_a,10), validated against the Stata <code>kappalate</code> command. Cluster-robust SEs, sampling weights, the bootstrap, and (for <code>"kappa"</code>/<code>"kappa0"</code>) Fieller confidence sets carry over from the existing machinery.</li>
+<li>Printed output now shows the kappalate names for the IPW estimators: normalized IPW is <code>tau_u</code>, unnormalized IPW is <code>tau_a,1</code>.</li>
+<li>New <code>ivmodel = "probit"</code> (kappalate’s <code>zmodel(probit)</code>) for the weighting estimators (<code>"ipw"</code> and the kappa methods), completing coverage of the kappalate command’s options.</li>
+<li>
+<code><a href="../reference/drlate_compare.html">drlate_compare()</a></code> now reports each kappa estimator’s own normalization in the <code>normalized</code> column, and <code><a href="../reference/drlate.html">?drlate</a></code> documents that the kappa denominators are kappa-weight means — estimating the same complier share as the IPW first-stage contrast, but as a different sample statistic.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="drlate-010-patch">drlate 0.1.0 (patch)<a class="anchor" aria-label="anchor" href="#drlate-010-patch"></a></h2>
 <p>Changes from an internal econometric audit (Monte Carlo evidence in <code>data-raw/mc-review.R</code> and <code>data-raw/mc-weak2.R</code>):</p>
