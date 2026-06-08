@@ -98,7 +98,7 @@ and the methodological papers whose estimators you use:
 
 The package descends from the authors’ Stata commands:
 
-> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2026). DRLATE: Stata
+> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2024). DRLATE: Stata
 > module to perform doubly robust estimation of the local average
 > treatment effect (LATE) and the local average treatment effect on the
 > treated (LATT). Statistical Software Components S459708, Boston

@@ -46,7 +46,7 @@ doi:10.1080/07350015.2024.2332763
       doi = {10.1080/07350015.2024.2332763},
     }
 
-Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2026). DRLATE: Stata
+Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2024). DRLATE: Stata
 module to perform doubly robust estimation of the local average
 treatment effect (LATE) and the local average treatment effect on the
 treated (LATT). Statistical Software Components S459708, Boston College
@@ -55,7 +55,7 @@ Department of Economics.
     @Misc{,
       title = {DRLATE: Stata module to perform doubly robust estimation of the local average treatment effect (LATE) and the local average treatment effect on the treated (LATT)},
       author = {Derya Uysal and Tymon Słoczyński and Jeffrey M. Wooldridge},
-      year = {2026},
+      year = {2024},
       howpublished = {Statistical Software Components S459708, Boston College Department of Economics},
       url = {https://ideas.repec.org/c/boc/bocode/s459708.html},
     }
