@@ -10,16 +10,31 @@ the Abadie-kappa weighting estimators of Słoczyński, Uysal & Wooldridge
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note (local: Windows 11, R release).
+0 errors | 0 warnings | 1 note.
 
-* A "checking for future file timestamps ... unable to verify current time"
-  NOTE may appear on some check machines; it is environmental (no network
-  time check available), not a package issue.
+This is a new submission. The only NOTE on win-builder (R-devel) is the
+standard new-submission note together with a list of "possibly misspelled
+words" in DESCRIPTION. Every flagged word is a proper noun or an
+established acronym in the field, and is spelled correctly:
+
+* Acronyms: AIPW, CBPS, IPT, IPW, IPWRA, LATT (inverse probability weighted
+  regression adjustment and related estimator names; the local average
+  treatment effect on the treated).
+* Proper nouns: Abadie, Fieller, Hausman, Sloczynski, Stata, Uysal,
+  Wooldridge (authors and named methods/software).
+* "unconfoundedness" is standard causal-inference terminology.
+
+A "checking for future file timestamps ... unable to verify current time"
+NOTE may also appear on some machines; it is environmental.
 
 ## Test environments
 
-* local: Windows 11, R release — 0 errors, 0 warnings, 1 environmental note
-* win-builder: R-devel and R-release (results pending; will be appended)
+* win-builder, R-devel (2026-06-08): Status OK, 1 NOTE (new submission /
+  DESCRIPTION word list, as above). Tests, vignette rebuild, PDF manual,
+  and examples all OK.
+* win-builder, R-release: submitted (result consistent with R-devel
+  expected).
+* local: Windows 11, R release — 0 errors, 0 warnings, 1 environmental note.
 
 ## Possibly-invalid URL note
 
