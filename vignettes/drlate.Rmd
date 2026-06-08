@@ -45,22 +45,27 @@ The estimation core supports:
 * **Normalized** (default) or unnormalized weighting for IPW and AIPW.
 * Sampling weights and cluster-robust standard errors.
 
-Beyond the Stata original, the package adds:
+Beyond the two Stata commands, the package adds a common workflow layer —
+and, notably, makes it available on the kappa weighting estimators too,
+where `kappalate` itself offers only robust and cluster-robust standard
+errors:
 
 * **Diagnostics**: `plot()` displays of propensity-score overlap,
   covariate balance, and implied weights; `balance()` tables; first-stage
   strength on every printout.
-* **Weak-instrument-robust inference**: Fieller/Anderson–Rubin confidence
-  sets via `confint(method = "fieller")`.
+* **Weak-instrument-robust inference**: Fieller confidence sets via
+  `confint(method = "fieller")` (for the ratio-form estimators, including
+  `"kappa"` and `"kappa0"`).
 * **Bootstrap inference**: `vcov = "bootstrap"` (cluster-aware,
   parallelizable).
-* **The DR Hausman test** of unconfoundedness from the paper's Section 5
-  (`dr_hausman()`), with an analytic standard error from a jointly
-  stacked moment system.
+* **The DR Hausman test** of unconfoundedness from the 2022 paper's
+  Section 5 (`dr_hausman()`), with an analytic standard error from a
+  jointly stacked moment system.
 * **Estimator comparison**: `drlate_compare()` with a dot-whisker plot.
 
-All extensions are validated by Monte Carlo (scripts in `data-raw/` of
-the source repository).
+The estimators are validated against the authors' Stata commands by
+golden-fixture parity (estimates and standard errors), and the inference
+extensions by Monte Carlo.
 
 ### Joint inference
 
@@ -197,7 +202,7 @@ confint(fit_b)
 Under one-sided noncompliance (nobody takes the treatment without the
 instrument), the instrument-based LATT equals the unconfoundedness-based
 ATT if treatment assignment is unconfounded given the covariates.
-Section 5 of the paper turns this equality into a heterogeneity-robust
+Section 5 of the 2022 paper turns this equality into a heterogeneity-robust
 Hausman test, implemented here; the Stata package does not provide it:
 
 ```{r}
@@ -282,6 +287,11 @@ module (see `citation("drlate")` for BibTeX entries):
   *Journal of Business & Economic Statistics* 43(1), 164–177.
 * Abadie, A. (2003). "Semiparametric Instrumental Variable Estimation of
   Treatment Response Models." *Journal of Econometrics* 113(2), 231–263.
+* Donald, S. G., Y.-C. Hsu, and R. P. Lieli (2014). "Testing the
+  Unconfoundedness Assumption via Inverse Probability Weighted Estimators
+  of (L)ATT." *Journal of Business & Economic Statistics* 32(3), 395–415.
+* Fieller, E. C. (1954). "Some Problems in Interval Estimation." *JRSS-B*
+  16(2), 175–185.
 * Graham, B. S., C. C. de Xavier Pinto, and D. Egel (2012). "Inverse
   Probability Tilting for Moment Condition Models with Missing Data."
   *Review of Economic Studies* 79(3), 1053–1079.

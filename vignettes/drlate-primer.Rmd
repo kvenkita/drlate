@@ -70,7 +70,7 @@ but conditioning on covariates still buys precision. So in practice you
 need the instrument to be as-good-as-random **conditional on covariates
 $X$** — and then both the numerator and the denominator above become
 covariate-adjusted contrasts. How exactly to adjust them is the entire
-subject of the paper and this package.
+subject of the 2022 paper and this package.
 
 ## 2. The four core estimators in one picture
 
@@ -410,10 +410,11 @@ The Fieller set is available on demand for any fit:
 confint(fit, method = "fieller")     # strong instrument: ~ Wald interval
 ```
 
-In the package's Monte Carlo validation, at first-stage F ≈ 2.5 the
-Fieller set covered the true LATE 95.5% of the time (reporting an
-unbounded set in two-thirds of replications — the statistically honest
-answer) while the Wald interval degenerated.
+In the package's Monte Carlo validation, under a very weak first stage
+(about 4% compliers) the Fieller set covered the true LATE 95.7% of the
+time — reporting an unbounded set in roughly 40% of replications, the
+statistically honest answer — while the Wald interval over-covered at
+99.3%, conveying a precision it did not have.
 
 ## 8. Bootstrap inference
 
@@ -455,7 +456,7 @@ which is what a healthy design looks like.
 
 ## 10. Do you even need the instrument? The DR Hausman test
 
-The paper's Section 5 proposes a specification test that the Stata
+The 2022 paper's Section 5 proposes a specification test that the Stata
 package does not implement. The logic: under **one-sided noncompliance**
 (nobody gets the treatment without the instrument), the LATT estimated
 *through the instrument* and the ATT estimated *assuming the treatment is
@@ -479,7 +480,7 @@ dr_hausman(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
 
 The unconfoundedness-based ATT (≈ 0.63) is biased upward by exactly the
 selection the DGP builds in, while the instrument-based LATT (≈ 0.38 in
-this one-sided subpopulation) is protected; the difference is six
+this one-sided subpopulation) is protected; the difference is almost six
 standard errors from zero. In practice: a rejection says the controls
 alone do not suffice — you needed the instrument; a non-rejection says
 the controls may suffice, and the much more precise
