@@ -45,10 +45,9 @@ The estimation core supports:
 * **Normalized** (default) or unnormalized weighting for IPW and AIPW.
 * Sampling weights and cluster-robust standard errors.
 
-Beyond the two Stata commands, the package adds a common workflow layer —
-and, notably, makes it available on the kappa weighting estimators too,
-where `kappalate` itself offers only robust and cluster-robust standard
-errors:
+Beyond the two Stata commands, the package adds a common workflow layer,
+and makes it available on the kappa weighting estimators too, where
+`kappalate` itself offers only robust and cluster-robust standard errors:
 
 * **Diagnostics**: `plot()` displays of propensity-score overlap,
   covariate balance, and implied weights; `balance()` tables; first-stage
@@ -69,11 +68,11 @@ extensions by Monte Carlo.
 
 ### Joint inference
 
-Point estimates are computed from sequential weighted regressions. For
-inference, the moment conditions of *every* estimation stage — the
+drlate computes point estimates from sequential weighted regressions. For
+inference, it stacks the moment conditions of *every* estimation stage — the
 instrument propensity score, the outcome regressions, the treatment
-regressions, and the causal aggregates — are stacked into one just-identified
-M-estimation system, and the variance is the sandwich
+regressions, and the causal aggregates — into one just-identified
+M-estimation system; the variance is the sandwich
 \(A^{-1} B A^{-\top} / n\) evaluated at the estimates. This reproduces the
 Stata package's `gmm, onestep iterate(0)` construction: standard errors
 account for the estimation uncertainty of each stage, including the
@@ -226,8 +225,8 @@ plot(cmp)
 
 ## Replicating the Stata examples
 
-The Stata help file's examples use a public SIPP extract. The equivalent R
-calls are:
+The Stata help file's examples use a public extract from the Survey of
+Income and Program Participation (SIPP). The equivalent R calls are:
 
 ```{r, eval = FALSE}
 sipp <- haven::read_dta("https://people.brandeis.edu/~tslocz/sipp.dta")
