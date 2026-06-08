@@ -28,12 +28,12 @@ Hausman test of unconfoundedness.
   and `"kappa10"` (`tau_a,10`), validated against the Stata `kappalate`
   command. drlate's normalized and unnormalized IPW coincide with
   `kappalate`'s `tau_u` and `tau_a,1`, completing the five-estimator menu.
-* Cluster-robust standard errors, sampling weights, the bootstrap, and —
-  uniquely — Fieller weak-instrument-robust confidence sets are available
+* Cluster-robust standard errors, sampling weights, the bootstrap, and,
+  uniquely, Fieller weak-instrument-robust confidence sets are available
   on the kappa estimators (the Stata command offers robust/cluster
   standard errors only).
 * Probit instrument propensity scores (`ivmodel = "probit"`, mirroring
-  `kappalate`'s `zmodel(probit)`) for the weighting estimators — with this,
+  `kappalate`'s `zmodel(probit)`) for the weighting estimators. With this,
   every estimator and propensity-score option of the Stata `kappalate`
   command is covered and fixture-validated.
 * Printed output shows the `kappalate` estimator names throughout.

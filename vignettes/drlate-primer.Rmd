@@ -36,7 +36,7 @@ Suppose you want to know the effect of a treatment $D$ (a job training
 program, military service, a 401(k) plan) on an outcome $Y$ (wages,
 savings). People *choose* whether to take the treatment, and the ones who
 take it differ from the ones who don't in ways you can't fully observe.
-Comparing treated and untreated outcomes — even with regression controls —
+Comparing treated and untreated outcomes, even with regression controls,
 confounds the effect of the treatment with the effect of being the kind of
 person who takes it.
 
@@ -68,7 +68,7 @@ Real instruments are rarely as clean as a lottery. Distance to college is
 exogenous *given* family background and region; a draft lottery is clean,
 but conditioning on covariates still buys precision. So in practice you
 need the instrument to be as-good-as-random **conditional on covariates
-$X$** — and then both the numerator and the denominator above become
+$X$**, and then both the numerator and the denominator above become
 covariate-adjusted contrasts. How exactly to adjust them is the entire
 subject of the 2022 paper and this package.
 
@@ -76,12 +76,11 @@ subject of the 2022 paper and this package.
 
 All estimators in `drlate` build the same ratio; they differ only in how
 each piece is adjusted for $X$. This section covers the four
-regression-and-weighting strategies from the 2022 paper; a second family —
-the Abadie-kappa weighting menu from the 2025 paper — appears in
-Section 6. Each piece is an "effect of $Z$ on
-something" — a problem formally identical to estimating an average
-treatment effect of $Z$ under unconfoundedness — so the familiar
-treatment-effects toolbox applies:
+regression-and-weighting strategies from the 2022 paper; a second family,
+the Abadie-kappa weighting menu from the 2025 paper, appears in
+Section 6. Each piece is an "effect of $Z$ on something", a problem
+formally identical to estimating an average treatment effect of $Z$ under
+unconfoundedness, so the familiar treatment-effects toolbox applies:
 
 | `method` | How it adjusts | Needs correct… |
 |---|---|---|
@@ -102,14 +101,14 @@ probability of 1.3, a negative count. IPWRA achieves it by *reweighting a
 quasi-likelihood regression*, so as long as you choose a sensible family
 (logit for binary outcomes, Poisson for counts), fitted values stay in
 range by construction. Hence IPWRA's appealing small-sample behavior in
-the paper's simulations — and its place as the package default.
+the paper's simulations, and its place as the package default.
 
 A second practical lesson from the paper concerns **normalization**. Raw
 IPW weights $Z_i/\hat p(X_i)$ need not average to one in a sample; if a few
 observations have small estimated propensity scores, unnormalized
 estimators can be erratic. Normalizing the weights to sum to one (the
 Hájek construction) fixes this and costs nothing, so `normalized = TRUE`
-is the default — it matters only for `"ipw"` and `"aipw"`; IPWRA is
+is the default. It matters only for `"ipw"` and `"aipw"`; IPWRA is
 normalized by construction.
 
 ## 3. A worked example
@@ -172,7 +171,7 @@ Read the three rows bottom-up:
 
 The final line reports **first-stage strength**: with a single binary
 instrument, the squared z-statistic is the first-stage robust F. Here
-F ≈ 1084 — far above the conventional F = 10 danger threshold — so Wald
+F ≈ 1084, far above the conventional F = 10 danger threshold, so Wald
 inference on the ratio is trustworthy. Section 7 shows what the package
 does when it isn't.
 
@@ -327,7 +326,7 @@ full menu of the authors' Stata command `kappalate`:
 | `"ipw"` (default normalized) | `tau_u` | normalized (Hájek) |
 
 Because the kappa methods carry no outcome or treatment model, the first
-two formulas must be intercept-only — and that makes the whole menu a
+two formulas must be intercept-only, and that makes the whole menu a
 genuinely like-for-like comparison (every row adjusts for covariates only
 through the instrument propensity score):
 
@@ -342,8 +341,8 @@ All four sit on top of each other here — a healthy design. The paper's
 main practical lesson is *which* of these to trust when they disagree:
 the **normalized** estimators (`tau_u`, i.e. `method = "ipw"`, and
 `tau_a,10`), because the unnormalized variants are sensitive to the
-location and scale of the outcome. You can see that sensitivity directly —
-shift the outcome by a constant, which should not change a treatment
+location and scale of the outcome. You can see that sensitivity directly.
+Shift the outcome by a constant, which should not change a treatment
 effect:
 
 ```{r kappa-shift}
@@ -376,13 +375,13 @@ Unlike the Stata command, all of drlate's inference machinery applies to
 the kappa menu: cluster-robust standard errors, sampling weights, the
 bootstrap, and Fieller confidence sets for `"kappa"` and `"kappa0"`
 (`"kappa10"` is a difference of two ratios, for which no Fieller pivot
-exists — use the bootstrap there).
+exists, so use the bootstrap there).
 
 ## 7. When the instrument is weak: Fieller confidence sets
 
 The LATE is a ratio, and ratios with imprecise denominators behave badly:
 the usual (delta-method) confidence interval can have far-from-nominal
-coverage when the first stage is weak. The package watches for this —
+coverage when the first stage is weak. The package watches for this:
 whenever the first-stage F drops below 10, the printout flags it and
 shows a **Fieller confidence set** alongside.
 
@@ -450,7 +449,7 @@ plot(cmp)
 
 A caveat printed in the documentation bears repeating: IPW carries no
 outcome/treatment regressions and RA no propensity score, so those rows
-necessarily use reduced specifications — the IPWRA-vs-AIPW pair is the
+necessarily use reduced specifications. The IPWRA-vs-AIPW pair is the
 like-for-like doubly robust comparison. Here all four agree closely,
 which is what a healthy design looks like.
 
