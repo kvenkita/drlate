@@ -270,7 +270,7 @@ module (see `citation("drlate")` for BibTeX entries):
 > and Weighting Estimators of the Local Average Treatment Effect.
 > *Journal of Business & Economic Statistics* 43(1), 164–177.
 
-> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2026). DRLATE: Stata
+> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2024). DRLATE: Stata
 > module to perform doubly robust estimation of the local average
 > treatment effect (LATE) and the local average treatment effect on the
 > treated (LATT). Statistical Software Components S459708, Boston College
