@@ -17,7 +17,7 @@
 #' doubly robust rows (IPWRA, AIPW) are the like-for-like pair.
 #'
 #' @inheritParams drlate
-#' @param methods Estimators to run.
+#' @param methods Estimators to run (any of the `method` values accepted by [drlate()]).
 #' @param both_norms Logical; also run the unnormalized variants of
 #'   `"ipw"` and `"aipw"` (default `FALSE`).
 #' @param ... Passed on to [drlate()] (e.g. `omodel`, `tmodel`, `ivmodel`,
@@ -36,7 +36,8 @@
 drlate_compare <- function(outcome, treatment, instrument, data,
                            methods = c("ipwra", "ipw", "aipw", "ra"),
                            both_norms = FALSE, ...) {
-  methods <- match.arg(methods, c("ipwra", "ipw", "aipw", "ra"),
+  methods <- match.arg(methods, c("ipwra", "ipw", "aipw", "ra",
+                                  "kappa", "kappa0", "kappa10"),
                        several.ok = TRUE)
   lhs <- function(f) f[[2]]
 
@@ -49,10 +50,10 @@ drlate_compare <- function(outcome, treatment, instrument, data,
 
   rows <- lapply(specs, function(sp) {
     fo <- outcome; ft <- treatment; fz <- instrument
-    if (sp$me == "ipw") {
+    if (sp$me %in% c("ipw", "kappa", "kappa0", "kappa10")) {
       if (length(all.vars(fo)) > 1L || length(all.vars(ft)) > 1L) {
-        message("method = \"ipw\": dropping outcome/treatment covariates ",
-                "(weighted means only).")
+        message("method = \"", sp$me, "\": dropping outcome/treatment ",
+                "covariates (weighted means only).")
       }
       fo <- stats::as.formula(call("~", lhs(outcome), 1))
       ft <- stats::as.formula(call("~", lhs(treatment), 1))
@@ -77,7 +78,13 @@ drlate_compare <- function(outcome, treatment, instrument, data,
                         ci_lo = NA_real_, ci_hi = NA_real_))
     }
     ci <- confint(fit)[1, ]
-    data.frame(method = sp$me, normalized = fit$statnorm == "nrm",
+    # The kappa estimators have a fixed normalization (they ignore the
+    # `normalized` flag): tau_a and tau_a,0 are unnormalized, tau_a,10 is
+    # normalized. Other methods report the fit's effective statnorm.
+    norm_flag <- switch(sp$me,
+      kappa = FALSE, kappa0 = FALSE, kappa10 = TRUE,
+      fit$statnorm == "nrm")
+    data.frame(method = sp$me, normalized = norm_flag,
                estimate = unname(coef(fit)[1]),
                se = sqrt(fit$vcov3[1, 1]),
                ci_lo = unname(ci[1]), ci_hi = unname(ci[2]))

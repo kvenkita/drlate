@@ -26,7 +26,7 @@ propensity score model; \code{z} must be binary 0/1. Use \code{z ~ 1} when
 
 \item{data}{A data frame containing all variables.}
 
-\item{methods}{Estimators to run.}
+\item{methods}{Estimators to run (any of the \code{method} values accepted by \code{\link[=drlate]{drlate()}}).}
 
 \item{both_norms}{Logical; also run the unnormalized variants of
 \code{"ipw"} and \code{"aipw"} (default \code{FALSE}).}

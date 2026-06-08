@@ -9,19 +9,22 @@ estimate_late <- function(ctx, ps) {
          "Z on D is constant and no estimation is needed.", call. = FALSE)
   }
   switch(ctx$method,
-    ipwra = late_ipwra(ctx, ps),
-    ra    = late_ra(ctx),
-    ipw   = late_ipw(ctx, ps),
-    aipw  = late_aipw(ctx, ps),
+    ipwra  = late_ipwra(ctx, ps),
+    ra     = late_ra(ctx),
+    ipw    = late_ipw(ctx, ps),
+    aipw   = late_aipw(ctx, ps),
+    kappa   = late_kappa(ctx, ps),
+    kappa0  = late_kappa0(ctx, ps),
+    kappa10 = late_kappa10(ctx, ps),
     stop("method = \"", ctx$method, "\" is not implemented yet.",
          call. = FALSE)
   )
 }
 
 #' Shared: PS moment block(s) and the arm reweight functions.
-#' For logit/cbps a single eqips block and reweights through `zhat`;
-#' for ipt two tilt blocks (eqips1, eqips0) and reweights through
-#' `zhat1`/`zhat0` (drlate_estimate_late.ado lines 25-38).
+#' For logit/cbps/probit a single eqips block and reweights through `zhat`
+#' (link-specific closures); for ipt two tilt blocks (eqips1, eqips0) and
+#' reweights through `zhat1`/`zhat0` (drlate_estimate_late.ado lines 25-38).
 #' @noRd
 late_ps_setup <- function(ctx, ps) {
   if (ctx$ivmodel == "ipt") {
@@ -29,6 +32,9 @@ late_ps_setup <- function(ctx, ps) {
                        make_ps_ipt0_block(ctx, ps$bips0)),
          rw1 = rw_invp(ctx, "zhat1"),
          rw0 = rw_inv1mp(ctx, "zhat0"))
+  } else if (ctx$ivmodel == "probit") {
+    list(blocks = list(make_ps_probit_block(ctx, ps$bips)),
+         rw1 = rw_invp_probit(ctx), rw0 = rw_inv1mp_probit(ctx))
   } else {
     blk <- switch(ctx$ivmodel,
       logit = make_ps_logit_block(ctx, ps$bips),
@@ -463,4 +469,99 @@ late_aipw <- function(ctx, ps) {
 
   list(blocks = blocks,
        estimates = c(late = late, num = num, denom = denom))
+}
+
+#' Shared kappa numerator block: delta = E(ZY/p - (1-Z)Y/(1-p))
+#' (kappalate eq_delta), expressed through the PS linear index.
+#' @noRd
+make_kappa_num_block <- function(ctx, setup, start) {
+  z <- ctx$z; y <- ctx$y
+  rw1 <- setup$rw1; rw0 <- setup$rw0
+  make_custom_block(ctx, "num", start, function(theta, layout)
+    z * rw1(theta, layout) * y - (1 - z) * rw0(theta, layout) * y -
+      theta[layout$num])
+}
+
+#' LATE via unnormalized Abadie kappa weighting (kappalate tau_a).
+#' Stata: kappalate.ado eq_delta + eq_gamma + eq_tau_a, gmm onestep
+#' iterate(0) — point estimates are closed-form means at the fitted PS,
+#' the stack exists only for the joint sandwich.
+#' @noRd
+late_kappa <- function(ctx, ps) {
+  w <- ctx$w; z <- ctx$z; y <- ctx$y; d <- ctx$d
+  setup <- late_ps_setup(ctx, ps)
+  rw1 <- setup$rw1; rw0 <- setup$rw0
+
+  num   <- wmean(ps$wt1 * y - ps$wt0 * y, w)
+  denom <- wmean(1 - d * (1 - z) / (1 - ps$ps) - (1 - d) * z / ps$ps, w)
+  late  <- num / denom
+
+  # Order: eqips, num (delta), denom (gamma), late — as in kappalate.ado
+  blocks <- c(setup$blocks, list(
+    make_kappa_num_block(ctx, setup, num),
+    make_custom_block(ctx, "denom", denom, function(theta, layout)
+      1 - d * (1 - z) * rw0(theta, layout) -
+        (1 - d) * z * rw1(theta, layout) - theta[layout$denom]),
+    make_late_block(ctx, late)
+  ))
+  list(blocks = blocks,
+       estimates = c(late = late, num = num, denom = denom))
+}
+
+#' LATE via the (1-D)-arm unnormalized kappa weighting (kappalate tau_a,0).
+#' Stata: kappalate.ado eq_delta + eq_gamma0 + eq_tau_a0; gamma0 uses the
+#' (D-1) contrast form, identical pointwise to (1-D)((1-Z)-(1-p))/(p(1-p)).
+#' @noRd
+late_kappa0 <- function(ctx, ps) {
+  w <- ctx$w; z <- ctx$z; y <- ctx$y; d <- ctx$d
+  setup <- late_ps_setup(ctx, ps)
+  rw1 <- setup$rw1; rw0 <- setup$rw0
+
+  num   <- wmean(ps$wt1 * y - ps$wt0 * y, w)
+  denom <- wmean((d - 1) * (ps$wt1 - ps$wt0), w)
+  late  <- num / denom
+
+  blocks <- c(setup$blocks, list(
+    make_kappa_num_block(ctx, setup, num),
+    make_custom_block(ctx, "denom", denom, function(theta, layout)
+      (d - 1) * (z * rw1(theta, layout) - (1 - z) * rw0(theta, layout)) -
+        theta[layout$denom]),
+    make_late_block(ctx, late)
+  ))
+  list(blocks = blocks,
+       estimates = c(late = late, num = num, denom = denom))
+}
+
+#' LATE via normalized Abadie kappa weighting (kappalate tau_a,10):
+#' delta1/gamma1 - delta0/gamma0, the contrast of kappa-weighted complier
+#' potential-outcome means. Stata: kappalate.ado eq_delta1, eq_gamma1,
+#' eq_delta0, eq_gamma0, eq_tau_a10 (same block order).
+#' @noRd
+late_kappa10 <- function(ctx, ps) {
+  w <- ctx$w; z <- ctx$z; y <- ctx$y; d <- ctx$d
+  setup <- late_ps_setup(ctx, ps)
+  rw1 <- setup$rw1; rw0 <- setup$rw0
+
+  kap1 <- ps$wt1 - ps$wt0       # z/p - (1-z)/(1-p) at the fitted PS
+  num1s   <- wmean(d * kap1 * y, w)
+  denom1s <- wmean(d * kap1, w)
+  num0s   <- wmean((d - 1) * kap1 * y, w)
+  denom0s <- wmean((d - 1) * kap1, w)
+  late <- num1s / denom1s - num0s / denom0s
+
+  contrast <- function(theta, layout)
+    z * rw1(theta, layout) - (1 - z) * rw0(theta, layout)
+
+  blocks <- c(setup$blocks, list(
+    make_custom_block(ctx, "num1", num1s, function(theta, layout)
+      d * contrast(theta, layout) * y - theta[layout$num1]),
+    make_custom_block(ctx, "denom1", denom1s, function(theta, layout)
+      d * contrast(theta, layout) - theta[layout$denom1]),
+    make_custom_block(ctx, "num0", num0s, function(theta, layout)
+      (d - 1) * contrast(theta, layout) * y - theta[layout$num0]),
+    make_custom_block(ctx, "denom0", denom0s, function(theta, layout)
+      (d - 1) * contrast(theta, layout) - theta[layout$denom0]),
+    make_late_diff_block(ctx, late)
+  ))
+  list(blocks = blocks, estimates = c(late = late))
 }

@@ -25,10 +25,10 @@ ctx_resample <- function(ctx, idx) {
   b
 }
 
-#' One bootstrap draw: resample, re-estimate, return c(late, num, denom)
+#' One bootstrap draw: resample, re-estimate, return the method's estimates vector
 #' or NAs on any failure (degenerate resample, non-convergence, overlap).
 #' @noRd
-boot_draw <- function(ctx, units, unit_rows) {
+boot_draw <- function(ctx, units, unit_rows, stat_names) {
   take <- sample(length(units), replace = TRUE)
   idx <- unlist(unit_rows[take], use.names = FALSE)
   # Suppress per-draw messages/warnings (e.g. GLM non-convergence notes);
@@ -36,14 +36,15 @@ boot_draw <- function(ctx, units, unit_rows) {
   tryCatch(
     suppressWarnings(suppressMessages(
       compute_point(ctx_resample(ctx, idx))$est$estimates)),
-    error = function(e) c(late = NA_real_, num = NA_real_,
-                          denom = NA_real_)
+    error = function(e) stats::setNames(rep(NA_real_, length(stat_names)),
+                                        stat_names)
   )
 }
 
 #' Run the bootstrap; returns draws matrix, SEs, percentile CIs, counts.
 #' @noRd
-drlate_boot <- function(ctx, reps, seed = NULL, cores = 1L, level = 0.95) {
+drlate_boot <- function(ctx, reps, seed = NULL, cores = 1L, level = 0.95,
+                        stat_names = c("late", "num", "denom")) {
   # Resampling units: whole clusters when clustering, else rows
   if (is.null(ctx$cluster)) {
     units <- seq_len(ctx$n)
@@ -70,15 +71,16 @@ drlate_boot <- function(ctx, reps, seed = NULL, cores = 1L, level = 0.95) {
     on.exit(parallel::stopCluster(cl), add = TRUE)
     if (!is.null(seed)) parallel::clusterSetRNGStream(cl, seed)
     draws <- parallel::parLapply(cl, seq_len(reps), function(i, ctx, units,
-                                                            unit_rows) {
-      boot_draw(ctx, units, unit_rows)
-    }, ctx = ctx, units = units, unit_rows = unit_rows)
+                                                            unit_rows,
+                                                            stat_names) {
+      boot_draw(ctx, units, unit_rows, stat_names)
+    }, ctx = ctx, units = units, unit_rows = unit_rows, stat_names = stat_names)
   } else {
     draws <- lapply(seq_len(reps), function(i)
-      boot_draw(ctx, units, unit_rows))
+      boot_draw(ctx, units, unit_rows, stat_names))
   }
   draws <- do.call(rbind, draws)
-  colnames(draws) <- c("late", "num", "denom")
+  colnames(draws) <- stat_names
 
   ok <- stats::complete.cases(draws)
   n_fail <- sum(!ok)

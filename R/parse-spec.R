@@ -51,9 +51,39 @@ build_ctx <- function(outcome, treatment, instrument, data,
     stop("covariates are not allowed in the instrument equation with ",
          "method = \"ra\"; use `z ~ 1`.", call. = FALSE)
   }
+  if (method %in% c("kappa", "kappa0", "kappa10")) {
+    if (estimand == "latt") {
+      stop("the kappa-weighting estimators are available for ",
+           "estimand = \"late\" only (Sloczynski, Uysal, and Wooldridge ",
+           "2025).", call. = FALSE)
+    }
+    if (ivmodel == "ipt") {
+      stop("ivmodel = \"ipt\" is not available with the kappa-weighting ",
+           "estimators.", call. = FALSE)
+    }
+    if (method %in% c("kappa0", "kappa10") && ivmodel == "cbps") {
+      stop("ivmodel = \"cbps\" is available only with method = \"kappa\" ",
+           "among the kappa-weighting estimators, following the Stata ",
+           "kappalate command.", call. = FALSE)
+    }
+    if (ncol(Xo) > 1L || ncol(Xt) > 1L) {
+      stop("covariates are not allowed in the outcome or treatment ",
+           "equations with the kappa-weighting estimators; use `y ~ 1` ",
+           "and `d ~ 1`.", call. = FALSE)
+    }
+    check_binary(d, all.vars(treatment)[1L], "treatment")
+  }
   if (ivmodel == "cbps" && estimand == "latt") {
     stop("ivmodel = \"cbps\" is not available with estimand = \"latt\".",
          call. = FALSE)
+  }
+  if (ivmodel == "probit" &&
+      !(method %in% c("ipw", "kappa", "kappa0", "kappa10") &&
+        estimand == "late")) {
+    stop("ivmodel = \"probit\" is available only for the weighting ",
+         "estimators covered by the Stata kappalate command (method ",
+         "\"ipw\", \"kappa\", \"kappa0\", or \"kappa10\") with ",
+         "estimand = \"late\".", call. = FALSE)
   }
 
   # --- Input validation (drlate_estimate.ado section 4) ---

@@ -7,16 +7,32 @@ print.drlate <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   methodd <- toupper(x$method)
   normd <- if (x$ivmodel == "ipt" || x$statnorm == "nrm") "normalized"
            else "unnormalized"
-  est_line <- if (x$method %in% c("ra", "ipwra")) methodd
-              else paste0(methodd, " (", normd, ")")
+  kappa_names <- c(kappa = "tau_a", kappa0 = "tau_a,0", kappa10 = "tau_a,10")
+  est_line <- if (x$method %in% c("ra", "ipwra")) {
+    methodd
+  } else if (x$method %in% names(kappa_names)) {
+    kind <- if (x$method == "kappa10") "normalized" else "unnormalized"
+    paste0(methodd, " (", kappa_names[[x$method]], "; ", kind,
+           " Abadie kappa weighting)")
+  } else if (x$method == "ipw" && x$ivmodel != "ipt") {
+    paste0(methodd, " (", normd, "; kappalate ",
+           if (normd == "normalized") "tau_u" else "tau_a,1", ")")
+  } else {
+    paste0(methodd, " (", normd, ")")
+  }
   omodeld <- x$omodel
   tmodeld <- x$tmodel
   if (x$method == "ipw") {
     omodeld <- "weighted mean"
     tmodeld <- "weighted mean"
   }
+  if (x$method %in% names(kappa_names)) {
+    omodeld <- "none (kappa weighting)"
+    tmodeld <- "none (kappa weighting)"
+  }
   zmodeld <- switch(x$ivmodel,
-    logit = "logit (MLE)", cbps = "logit (CBPS)", ipt = "logit (IPT)")
+    logit = "logit (MLE)", cbps = "logit (CBPS)", ipt = "logit (IPT)",
+    probit = "probit (MLE)")
 
   cat("\n", title, "\n", sep = "")
   cat("Number of obs    : ", format(x$N, big.mark = ","), "\n", sep = "")
@@ -44,9 +60,11 @@ print.drlate <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
       sep = "")
   if (is.finite(fz) && fz^2 < 10) {
     cat("  [weak: Wald inference on the ratio may be unreliable]")
-    f <- fieller_from_fit(x)
-    cat("\nFieller 95% confidence set for the ", x$estimand, ": ",
-        format_fieller(f, digits = max(4L, digits)), sep = "")
+    if (!is.null(x$layout$num) && !is.null(x$layout$denom)) {
+      f <- fieller_from_fit(x)
+      cat("\nFieller 95% confidence set for the ", x$estimand, ": ",
+          format_fieller(f, digits = max(4L, digits)), sep = "")
+    }
   }
   cat("\n")
   invisible(x)

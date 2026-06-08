@@ -11,8 +11,8 @@ drlate(
   data,
   omodel = c("linear", "logit", "poisson"),
   tmodel = c("logit", "linear", "poisson"),
-  ivmodel = c("logit", "cbps", "ipt"),
-  method = c("ipwra", "ipw", "aipw", "ra"),
+  ivmodel = c("logit", "cbps", "ipt", "probit"),
+  method = c("ipwra", "ipw", "aipw", "ra", "kappa", "kappa0", "kappa10"),
   estimand = c("late", "latt"),
   normalized = TRUE,
   weights = NULL,
@@ -47,11 +47,23 @@ be 0/1), \code{"linear"}, or \code{"poisson"}.}
 
 \item{ivmodel}{Instrument propensity score model: \code{"logit"} (maximum
 likelihood; default), \code{"cbps"} (covariate balancing, Imai and Ratkovic
-2014; not available with \code{estimand = "latt"}), or \code{"ipt"} (inverse
-probability tilting, Graham, Pinto, and Egel 2012).}
+2014; not available with \code{estimand = "latt"}), \code{"ipt"} (inverse
+probability tilting, Graham, Pinto, and Egel 2012), or \code{"probit"}
+(maximum likelihood; mirrors kappalate's \code{zmodel(probit)} and is
+available only for the weighting estimators that command covers —
+\code{"ipw"}, \code{"kappa"}, \code{"kappa0"}, \code{"kappa10"} — with
+\code{estimand = "late"}).}
 
 \item{method}{Estimator: \code{"ipwra"} (inverse-probability-weighted
-regression adjustment; default), \code{"ipw"}, \code{"aipw"}, or \code{"ra"}.}
+regression adjustment; default), \code{"ipw"}, \code{"aipw"}, \code{"ra"}, or one of
+the kappa-weighting estimators of Słoczyński, Uysal, and Wooldridge
+(2025): \code{"kappa"} (unnormalized Abadie kappa; kappalate's \code{tau_a}),
+\code{"kappa0"} (untreated-arm kappa; \verb{tau_a,0}), or \code{"kappa10"}
+(normalized kappa; \verb{tau_a,10}). The kappa estimators require
+intercept-only outcome and treatment formulas, a binary treatment, and
+\code{estimand = "late"}; \code{ivmodel = "cbps"} is available for \code{"kappa"}
+only, and \code{"ipt"} for none of them. drlate's normalized and
+unnormalized \code{"ipw"} coincide with kappalate's \code{tau_u} and \verb{tau_a,1}.}
 
 \item{estimand}{\code{"late"} (default) or \code{"latt"}.}
 
@@ -107,6 +119,14 @@ and the denominator effect of Z on D), \code{vcov3} (their variance matrix,
 diagonal by construction, as in the Stata package), \code{vcov_full} (the
 joint variance matrix of all stacked parameters), \code{theta} (all stacked
 parameter estimates), \code{N}, \code{dmeanz1}, \code{dmeanz0}, and the call.
+For \code{method = "kappa10"} only the causal estimate is reported
+(the estimator is a difference of two ratios, so no single
+numerator/denominator pair exists). For \code{"kappa"} and \code{"kappa0"} the
+third coefficient is the mean of the corresponding kappa weight: under
+the LATE assumptions it estimates the same complier share as the IPW
+first-stage contrast (the population ATE of Z on D), but it is a
+different sample statistic and the two can diverge under propensity
+score misspecification.
 }
 \description{
 Estimates the local average treatment effect (LATE) or the local average
@@ -129,4 +149,9 @@ summary(fit)
 Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2022). "Doubly Robust
 Estimation of Local Average Treatment Effects Using Inverse Probability
 Weighted Regression Adjustment." \doi{10.48550/arXiv.2208.01300}
+
+Słoczyński, T., S. D. Uysal, and J. M. Wooldridge (2025). "Abadie's
+Kappa and Weighting Estimators of the Local Average Treatment Effect."
+\emph{Journal of Business & Economic Statistics} 43(1), 164--177.
+\doi{10.1080/07350015.2024.2332763}
 }
