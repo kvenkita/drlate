@@ -10,15 +10,30 @@ the Abadie-kappa weighting estimators of Słoczyński, Uysal & Wooldridge
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes (local: Windows 11, R release).
+0 errors | 0 warnings | 1 note (local: Windows 11, R release).
 
-* A "unable to verify current time" NOTE may appear on some check
-  machines; it is environmental (no network time check available).
+* A "checking for future file timestamps ... unable to verify current time"
+  NOTE may appear on some check machines; it is environmental (no network
+  time check available), not a package issue.
 
 ## Test environments
 
-* local: Windows 11, R release
-* (win-builder and R-hub results to be appended before submission)
+* local: Windows 11, R release — 0 errors, 0 warnings, 1 environmental note
+* win-builder: R-devel and R-release (results pending; will be appended)
+
+## Possibly-invalid URL note
+
+The package's URL check flags one URL as status 403:
+
+  https://doi.org/10.1080/07350015.2024.2332763
+
+This DOI is valid and resolves: doi.org returns a 302 redirect to the
+publisher's article page (Taylor & Francis,
+https://www.tandfonline.com/doi/full/10.1080/07350015.2024.2332763).
+Taylor & Francis returns 403 to automated HEAD/GET requests (bot
+protection); the link works in a browser. It is the DOI of the second
+methodological reference (the 2025 JBES paper) and is given in the
+DESCRIPTION as <doi:...>, in inst/CITATION, and in the README.
 
 ## Notes for the reviewer
 

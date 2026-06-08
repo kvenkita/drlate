@@ -33,6 +33,7 @@ Description: Estimates the local average treatment effect (LATE) and the
     'kappalate' (S459257).
 License: MIT + file LICENSE
 Encoding: UTF-8
+Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Depends: R (>= 4.1)
