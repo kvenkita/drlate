@@ -93,7 +93,7 @@ and the methodological papers whose estimators you use:
 
 The package descends from the authors' Stata commands:
 
-> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2024). DRLATE: Stata
+> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2026). DRLATE: Stata
 > module to perform doubly robust estimation of the local average
 > treatment effect (LATE) and the local average treatment effect on the
 > treated (LATT). Statistical Software Components S459708, Boston College
@@ -111,7 +111,8 @@ The package descends from the authors' Stata commands:
 | Instrument propensity score models (`ivmodel`) | logit MLE (default), CBPS, IPT; probit MLE for the weighting estimators |
 | Weighting | normalized (default) or unnormalized moments; sampling weights |
 | Standard errors | joint sandwich over all estimation stages; robust or cluster-robust |
-| Diagnostics | `plot(fit)` for propensity-score overlap, covariate balance, and weight distributions; `balance()` tables; first-stage strength on every printout |
+| Diagnostics | `plot(fit)` for propensity-score overlap (histogram or density), covariate balance (love plot or per-covariate densities), and weight distributions; `balance()` / `balance(fit, detail = TRUE)` tables; `balance_test()` (Imai–Ratkovic overidentification balance test); first-stage strength on every printout |
+| Complier profiling | `complier_means()` for population-vs-complier covariate means; `kappa_weights()` for the underlying Abadie-kappa weights |
 | Fieller confidence sets | `confint(fit, method = "fieller")` — weak-instrument-robust; available for all ratio-form estimators including `kappa`/`kappa0` |
 | Bootstrap | `drlate(..., vcov = "bootstrap")` — cluster-aware percentile intervals |
 | DR Hausman test | `dr_hausman()` — test of unconfoundedness under one-sided noncompliance (2022 paper, Section 5) |

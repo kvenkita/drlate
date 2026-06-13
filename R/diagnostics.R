@@ -18,16 +18,22 @@
 #' \eqn{p/(1-p)}, matching the estimator).
 #'
 #' @param object A fitted [drlate()] object (with `keep_data = TRUE`).
+#' @param detail Logical. If `TRUE`, append the IPW-weighted arm means
+#'   (`mean_weighted_z1`, `mean_weighted_z0`) and the unweighted and weighted
+#'   variance ratios (`vratio_unweighted`, `vratio_weighted`, each
+#'   \eqn{s_1^2 / s_0^2}), mirroring the \proglang{Stata}
+#'   \code{latebalance summarize} report. Defaults to `FALSE`.
 #' @param ... Currently unused.
 #' @return A data frame with one row per covariate and columns
-#'   `variable`, `smd_unweighted`, and `smd_weighted`.
+#'   `variable`, `smd_unweighted`, and `smd_weighted`; with `detail = TRUE`,
+#'   the four additional columns described above.
 #' @seealso [plot.drlate()] with `type = "balance"` for the love plot.
 #' @export
 balance <- function(object, ...) UseMethod("balance")
 
 #' @rdname balance
 #' @export
-balance.drlate <- function(object, ...) {
+balance.drlate <- function(object, detail = FALSE, ...) {
   ctx <- need_ctx(object)
   if (is.null(object$ps)) {
     stop("no instrument propensity score is estimated with method = \"ra\"; ",
@@ -55,20 +61,35 @@ balance.drlate <- function(object, ...) {
     (wmean(x[s1], wts1[s1]) - wmean(x[!s1], wts0[!s1])) / pooled
   }
 
-  data.frame(
+  out <- data.frame(
     variable = colnames(X),
     smd_unweighted = apply(X, 2, smd, wts1 = w, wts0 = w),
     smd_weighted   = apply(X, 2, smd, wts1 = w1, wts0 = w0),
     row.names = NULL
   )
+  if (!detail) return(out)
+
+  s1 <- z == 1
+  vratio <- function(x, wts1, wts0) {
+    v0 <- wvar(x[!s1], wts0[!s1])
+    if (!is.finite(v0) || v0 == 0) return(NA_real_)
+    wvar(x[s1], wts1[s1]) / v0
+  }
+  out$mean_weighted_z1  <- apply(X, 2, function(x) wmean(x[s1],  w1[s1]))
+  out$mean_weighted_z0  <- apply(X, 2, function(x) wmean(x[!s1], w0[!s1]))
+  out$vratio_unweighted <- apply(X, 2, vratio, wts1 = w, wts0 = w)
+  out$vratio_weighted   <- apply(X, 2, vratio, wts1 = w1, wts0 = w0)
+  out
 }
 
-#' Deduplicated union of the three model matrices, intercept dropped
+#' Deduplicated union of the three model matrices on their original
+#' (pre-standardization) scale, intercept dropped. Standardization is
+#' span-preserving, so scale-invariant diagnostics (SMDs) are unaffected by
+#' using the raw columns, while scale-dependent ones (complier means) stay
+#' interpretable.
 #' @noRd
 diag_covariates <- function(ctx) {
-  X <- cbind(ctx$Xz, ctx$Xo, ctx$Xt)
-  X <- X[, !duplicated(colnames(X)), drop = FALSE]
-  X[, setdiff(colnames(X), "(Intercept)"), drop = FALSE]
+  ctx$Xdiag
 }
 
 #' Fetch the retained ctx or fail with guidance
