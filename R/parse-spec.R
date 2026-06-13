@@ -92,6 +92,14 @@ build_ctx <- function(outcome, treatment, instrument, data,
   check_family(y, all.vars(outcome)[1L],   omodel, "outcome")
   check_family(d, all.vars(treatment)[1L], tmodel, "treatment")
 
+  # --- Raw (pre-standardization) covariate union, retained for diagnostics
+  # --- that report covariate values on their original scale (e.g.
+  # --- complier_means()). Standardization is span-preserving, so it does not
+  # --- affect estimates, but it does make standardized means uninterpretable.
+  Xdiag <- cbind(Xz, Xo, Xt)
+  Xdiag <- Xdiag[, !duplicated(colnames(Xdiag)), drop = FALSE]
+  Xdiag <- Xdiag[, setdiff(colnames(Xdiag), "(Intercept)"), drop = FALSE]
+
   # --- Standardize continuous covariate columns (span-preserving) ---
   Xo <- standardize_mm(Xo, w)
   Xt <- standardize_mm(Xt, w)
@@ -116,7 +124,7 @@ build_ctx <- function(outcome, treatment, instrument, data,
 
   list(
     y = y, d = d, z = z, w = w, cluster = cl, n = n,
-    Xo = Xo, Xt = Xt, Xz = Xz,
+    Xo = Xo, Xt = Xt, Xz = Xz, Xdiag = Xdiag,
     omodel = omodel, tmodel = tmodel, ivmodel = ivmodel,
     method = method, estimand = estimand, statnorm = statnorm,
     dmeanz1 = dmeanz1, dmeanz0 = dmeanz0, case = case,

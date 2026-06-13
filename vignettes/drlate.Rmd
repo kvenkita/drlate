@@ -50,8 +50,9 @@ and makes it available on the kappa weighting estimators too, where
 `kappalate` itself offers only robust and cluster-robust standard errors:
 
 * **Diagnostics**: `plot()` displays of propensity-score overlap,
-  covariate balance, and implied weights; `balance()` tables; first-stage
-  strength on every printout.
+  covariate balance, and implied weights; `balance()` tables and the
+  `balance_test()` overidentification balance test; `complier_means()`
+  complier profiling; first-stage strength on every printout.
 * **Weak-instrument-robust inference**: Fieller confidence sets via
   `confint(method = "fieller")` (for the ratio-form estimators, including
   `"kappa"` and `"kappa0"`).
@@ -177,6 +178,17 @@ balance(fit)
 plot(fit, type = "overlap")
 ```
 
+`complier_means()` profiles how the compliers differ from the population
+(weighting by Abadie's kappa), and `balance_test()` runs the
+Imai--Ratkovic overidentification test of whether the propensity-score
+model balances the covariates --- diagnostics that mirror the
+postestimation suite of Stata's `lateffects` command:
+
+```{r diag-postest}
+complier_means(fit)
+balance_test(fit)
+```
+
 ## Inference beyond the default sandwich
 
 Every printout reports the first-stage z (with z² ≈ F for a single binary
@@ -270,7 +282,7 @@ module (see `citation("drlate")` for BibTeX entries):
 > and Weighting Estimators of the Local Average Treatment Effect.
 > *Journal of Business & Economic Statistics* 43(1), 164–177.
 
-> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2024). DRLATE: Stata
+> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2026). DRLATE: Stata
 > module to perform doubly robust estimation of the local average
 > treatment effect (LATE) and the local average treatment effect on the
 > treated (LATT). Statistical Software Components S459708, Boston College

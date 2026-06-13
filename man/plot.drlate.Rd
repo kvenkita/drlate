@@ -4,24 +4,43 @@
 \alias{plot.drlate}
 \title{Diagnostic plots for drlate fits}
 \usage{
-\method{plot}{drlate}(x, type = c("overlap", "balance", "weights"), bins = 30, ...)
+\method{plot}{drlate}(
+  x,
+  type = c("overlap", "balance", "balance_density", "weights"),
+  bins = 30,
+  geom = c("histogram", "density"),
+  var = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{A fitted \code{\link[=drlate]{drlate()}} object (with \code{keep_data = TRUE}).}
 
 \item{type}{One of:
 \itemize{
-\item \code{"overlap"}: histograms of the estimated instrument propensity score
-by instrument arm, with the \code{pstolerance} bounds marked. Mass piling
-up near 0 or 1 signals overlap problems.
+\item \code{"overlap"}: histograms (or kernel densities, see \code{geom}) of the
+estimated instrument propensity score by instrument arm, with the
+\code{pstolerance} bounds marked. Mass piling up near 0 or 1 signals overlap
+problems.
 \item \code{"balance"}: a love plot of standardized mean differences from
 \code{\link[=balance]{balance()}}, unweighted vs IPW-weighted, with the conventional
 |SMD| = 0.1 reference lines.
+\item \code{"balance_density"}: kernel densities of the covariates by instrument
+arm, raw versus IPW-weighted (the \proglang{Stata}
+\code{latebalance density} display). Weighting that balances a covariate
+brings the two arm densities together in the weighted panel.
 \item \code{"weights"}: distributions of the implied IPW weights by arm;
 a long right tail means a few observations dominate the estimate.
 }}
 
 \item{bins}{Number of histogram bins for \code{"overlap"} and \code{"weights"}.}
+
+\item{geom}{For \code{type = "overlap"}, either \code{"histogram"} (default) or
+\code{"density"} (a kernel-density overlap matching \proglang{Stata}
+\code{lateoverlap}).}
+
+\item{var}{For \code{type = "balance_density"}, an optional character vector
+selecting covariates to plot; defaults to all model covariates.}
 
 \item{...}{Currently unused.}
 }

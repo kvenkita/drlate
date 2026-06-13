@@ -12,6 +12,10 @@ wsd <- function(x, w) {
   sqrt(sum(w * (x - m)^2) / (sum(w) - 1))
 }
 
+#' Weighted variance (square of [wsd]); reduces to [stats::var] when w = 1.
+#' @noRd
+wvar <- function(x, w) wsd(x, w)^2
+
 #' Check that a variable takes exactly the values 0 and 1
 #' @noRd
 check_binary <- function(x, name, role) {

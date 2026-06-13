@@ -1,3 +1,24 @@
+# drlate (development version)
+
+Postestimation diagnostics mirroring the Stata `lateffects` suite (StataNow):
+
+* `complier_means()` reports population versus complier covariate means, the
+  complier averages computed with the normalized Abadie-kappa weights (Stata's
+  `estat compliers`). `kappa_weights()` returns those weights (the `genkappa`
+  object) for use in other complier summaries.
+* `balance_test()` implements the Imai and Ratkovic (2014) overidentification
+  test for whether the instrument propensity score balances the covariates
+  (Stata's `latebalance overid`); cluster-robust when the fit is.
+* `balance(detail = TRUE)` adds IPW-weighted arm means and unweighted and
+  weighted variance ratios alongside the standardized mean differences
+  (Stata's `latebalance summarize`).
+* `plot()` gains `type = "balance_density"` (covariate kernel densities by
+  instrument arm, raw versus weighted; Stata's `latebalance density`) and a
+  `geom = "density"` option for `type = "overlap"` (Stata's `lateoverlap`).
+
+These diagnostics are internally validated; direct numerical parity with the
+`lateffects` postestimation commands is planned for a later release.
+
 # drlate 0.2.0
 
 * New kappa-weighting estimators of the LATE from Słoczyński, Uysal, and

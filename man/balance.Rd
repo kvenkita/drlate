@@ -7,16 +7,23 @@
 \usage{
 balance(object, ...)
 
-\method{balance}{drlate}(object, ...)
+\method{balance}{drlate}(object, detail = FALSE, ...)
 }
 \arguments{
 \item{object}{A fitted \code{\link[=drlate]{drlate()}} object (with \code{keep_data = TRUE}).}
 
 \item{...}{Currently unused.}
+
+\item{detail}{Logical. If \code{TRUE}, append the IPW-weighted arm means
+(\code{mean_weighted_z1}, \code{mean_weighted_z0}) and the unweighted and weighted
+variance ratios (\code{vratio_unweighted}, \code{vratio_weighted}, each
+\eqn{s_1^2 / s_0^2}), mirroring the \proglang{Stata}
+\code{latebalance summarize} report. Defaults to \code{FALSE}.}
 }
 \value{
 A data frame with one row per covariate and columns
-\code{variable}, \code{smd_unweighted}, and \code{smd_weighted}.
+\code{variable}, \code{smd_unweighted}, and \code{smd_weighted}; with \code{detail = TRUE},
+the four additional columns described above.
 }
 \description{
 Computes standardized mean differences (SMDs) of the model covariates

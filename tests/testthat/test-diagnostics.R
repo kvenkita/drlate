@@ -76,3 +76,44 @@ test_that("print shows the first-stage z and flags weakness", {
   out_w <- paste(capture.output(print(fit_w)), collapse = "\n")
   expect_match(out_w, "weak")
 })
+
+test_that("balance(detail = TRUE) adds variance ratios and weighted arm means", {
+  d <- drlate_sim
+  fit <- drlate(lwage ~ age, nvstat ~ age, rsncode ~ age + educ, data = d)
+
+  # Default call is unchanged (backward compatible)
+  b0 <- balance(fit)
+  expect_named(b0, c("variable", "smd_unweighted", "smd_weighted"))
+
+  b <- balance(fit, detail = TRUE)
+  expect_true(all(c("smd_unweighted", "smd_weighted",
+                    "mean_weighted_z1", "mean_weighted_z0",
+                    "vratio_unweighted", "vratio_weighted") %in% names(b)))
+
+  # Hand checks for age on the original scale (complete data -> full sample)
+  z <- fit$ctx$z; w <- fit$ctx$w; ps <- fit$ps$ps
+  age <- d$age
+  vr_u <- var(age[z == 1]) / var(age[z == 0])
+  expect_equal(b$vratio_unweighted[b$variable == "age"], vr_u,
+               tolerance = 1e-8)
+  mw1 <- weighted.mean(age[z == 1], (w / ps)[z == 1])
+  expect_equal(b$mean_weighted_z1[b$variable == "age"], mw1,
+               tolerance = 1e-8)
+})
+
+test_that("plot.drlate supports density overlap and balance-density types", {
+  skip_if_not_installed("ggplot2")
+  fit <- drlate(lwage ~ age, nvstat ~ age, rsncode ~ age + educ,
+                data = drlate_sim)
+  has_density <- function(p) {
+    any(vapply(p$layers, function(l) inherits(l$geom, "GeomDensity"),
+               logical(1)))
+  }
+  expect_false(has_density(plot(fit, type = "overlap")))
+  p_dens <- plot(fit, type = "overlap", geom = "density")
+  expect_s3_class(p_dens, "ggplot")
+  expect_true(has_density(p_dens))
+
+  expect_s3_class(plot(fit, type = "balance_density"), "ggplot")
+  expect_s3_class(plot(fit, type = "balance_density", var = "age"), "ggplot")
+})
