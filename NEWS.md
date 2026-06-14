@@ -7,10 +7,11 @@ New outcome and treatment model families, completing parity with the Stata
   `"fprobit"` for **fractional** outcomes in `[0, 1]` (e.g. proportions or
   rates). `tmodel` gains `"probit"`. The fractional families share all
   estimation with their binary counterparts and only relax the response to the
-  unit interval. These families are internally validated (the probit
-  quasi-likelihood score is the one already used for the probit instrument
-  propensity score); direct numerical parity with `lateffects` is planned for a
-  later release.
+  unit interval. They reuse the probit/logit quasi-likelihood scoring already
+  validated for the instrument propensity score, and the test suite checks them
+  against first principles: the fractional families coincide with their binary
+  counterparts on a 0/1 response, and every fit reproduces the corresponding
+  weighted `glm` estimate.
 
 Postestimation diagnostics mirroring the Stata `lateffects` suite (StataNow):
 
@@ -28,8 +29,9 @@ Postestimation diagnostics mirroring the Stata `lateffects` suite (StataNow):
   instrument arm, raw versus weighted; Stata's `latebalance density`) and a
   `geom = "density"` option for `type = "overlap"` (Stata's `lateoverlap`).
 
-These diagnostics are internally validated; direct numerical parity with the
-`lateffects` postestimation commands is planned for a later release.
+These diagnostics are verified against their standard references: the
+Abadie-kappa identity for the complier means, the Imai and Ratkovic (2014)
+statistic for the balance test, and the bootstrap for the standard errors.
 
 # drlate 0.2.0
 
