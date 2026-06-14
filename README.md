@@ -1,9 +1,10 @@
 # drlate
 
-`drlate` estimates the local average treatment effect (LATE) and the local
-average treatment effect on the treated (LATT) from observational data with
-a binary instrument. It implements the complete estimator program of
-Słoczyński, Uysal, and Wooldridge in one package: the doubly robust
+`drlate` provides **doubly robust** estimation of the local average
+treatment effect (LATE) and the local average treatment effect on the
+treated (LATT) from observational data with a binary instrument. It
+implements the complete estimator program of Słoczyński, Uysal, and
+Wooldridge in one package: the doubly robust
 IPWRA/IPW/AIPW/RA estimators of
 [Słoczyński, Uysal & Wooldridge (2022)](https://doi.org/10.48550/arXiv.2208.01300)
 and the Abadie-kappa weighting estimators of

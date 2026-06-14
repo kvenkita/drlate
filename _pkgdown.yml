@@ -40,6 +40,12 @@ reference:
   contents:
   - plot.drlate
   - balance
+  - balance_test
+- title: Complier profiling
+  desc: Characterize the complier subpopulation via Abadie's kappa.
+  contents:
+  - complier_means
+  - kappa_weights
 - title: Inference
   desc: Confidence intervals, including weak-instrument-robust sets.
   contents:
