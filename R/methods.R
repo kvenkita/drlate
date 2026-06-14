@@ -20,8 +20,8 @@ print.drlate <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   } else {
     paste0(methodd, " (", normd, ")")
   }
-  omodeld <- x$omodel
-  tmodeld <- x$tmodel
+  omodeld <- model_label(x$omodel)
+  tmodeld <- model_label(x$tmodel)
   if (x$method == "ipw") {
     omodeld <- "weighted mean"
     tmodeld <- "weighted mean"

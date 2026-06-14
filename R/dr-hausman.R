@@ -60,7 +60,6 @@ dr_hausman <- function(outcome, treatment, instrument, data,
   omodel <- match.arg(omodel)
   tmodel <- match.arg(tmodel)
   ivmodel <- match.arg(ivmodel)
-  fam <- c(linear = "gaussian", logit = "binomial", poisson = "poisson")
   dname <- paste(deparse(substitute(data)), collapse = "")
 
   if (!is.null(subset)) data <- data[subset, , drop = FALSE]
@@ -72,7 +71,7 @@ dr_hausman <- function(outcome, treatment, instrument, data,
   }
 
   ctx <- build_ctx(outcome, treatment, instrument, data,
-                   omodel = fam[[omodel]], tmodel = fam[[tmodel]],
+                   omodel = omodel, tmodel = tmodel,
                    ivmodel = ivmodel, method = "ipwra", estimand = "latt",
                    normalized = TRUE, weights = weights, cluster = cluster,
                    pstolerance = pstolerance, osample = FALSE)

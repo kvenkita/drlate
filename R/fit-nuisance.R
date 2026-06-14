@@ -3,21 +3,32 @@
 # because the stacked GMM runs with iterate(0)).
 
 #' Weighted GLM on a subsample; returns coefficients named by columns of X.
+#' `link` is an internal link token (gaussian, logit, probit, poisson). The
 #' quasi- families allow non-integer weights with identical score equations
-#' (hence identical coefficients) to binomial/poisson MLE.
+#' (hence identical coefficients) to the corresponding MLE, and accommodate
+#' fractional responses on the logit/probit links.
 #' @noRd
-fit_wglm <- function(yvar, X, family, w, subset) {
+fit_wglm <- function(yvar, X, link, w, subset) {
   ys <- yvar[subset]
   Xs <- X[subset, , drop = FALSE]
   ws <- w[subset]
-  if (family == "gaussian") {
+  if (link == "gaussian") {
     fit <- stats::lm.wfit(Xs, ys, ws)
     b <- fit$coefficients
   } else {
-    fam <- if (family == "binomial") stats::quasibinomial()
-           else stats::quasipoisson()
+    # Tight tolerance for the probit link: the non-canonical score amplifies
+    # rounding, so iterate further than glm.fit's default epsilon (mirrors
+    # the probit instrument-propensity-score fit in ps-models.R).
+    fam <- switch(link,
+      logit   = stats::quasibinomial("logit"),
+      probit  = stats::quasibinomial("probit"),
+      poisson = stats::quasipoisson(),
+      stop("unknown link: ", link))
+    ctrl <- if (link == "probit")
+      stats::glm.control(epsilon = 1e-12, maxit = 100L)
+    else stats::glm.control()
     fit <- suppressWarnings(
-      stats::glm.fit(Xs, ys, weights = ws, family = fam)
+      stats::glm.fit(Xs, ys, weights = ws, family = fam, control = ctrl)
     )
     if (!fit$converged) {
       warning("GLM did not converge; coefficients used as-is ",

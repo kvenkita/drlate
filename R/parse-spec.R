@@ -125,7 +125,8 @@ build_ctx <- function(outcome, treatment, instrument, data,
   list(
     y = y, d = d, z = z, w = w, cluster = cl, n = n,
     Xo = Xo, Xt = Xt, Xz = Xz, Xdiag = Xdiag,
-    omodel = omodel, tmodel = tmodel, ivmodel = ivmodel,
+    omodel = model_link(omodel), tmodel = model_link(tmodel),
+    ivmodel = ivmodel,
     method = method, estimand = estimand, statnorm = statnorm,
     dmeanz1 = dmeanz1, dmeanz0 = dmeanz0, case = case,
     pstolerance = pstolerance, osample = osample
