@@ -37,7 +37,7 @@ test_that("moment system is square and zero at the estimates", {
   # theta0; this is what makes iterate(0) exact in the Stata original.
   ctx <- build_ctx(lwage ~ age + educ, nvstat ~ age + educ,
                    rsncode ~ age + educ, d,
-                   omodel = "gaussian", tmodel = "binomial",
+                   omodel = "linear", tmodel = "logit",
                    ivmodel = "logit", method = "ipwra", estimand = "late",
                    normalized = TRUE)
   ps <- fit_ps(ctx)

@@ -2,7 +2,7 @@
 
 make_ctx <- function(data, ivmodel, estimand = "late", method = "ipwra") {
   build_ctx(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
-            data, omodel = "gaussian", tmodel = "binomial",
+            data, omodel = "linear", tmodel = "logit",
             ivmodel = ivmodel, method = method, estimand = estimand,
             normalized = TRUE)
 }

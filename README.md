@@ -108,7 +108,7 @@ The package descends from the authors' Stata commands:
 |---|---|
 | Estimands | LATE, LATT |
 | Estimators (`method`) | IPWRA (default), IPW, AIPW, RA; Abadie-kappa weighting: `kappa`, `kappa0`, `kappa10` (Słoczyński, Uysal & Wooldridge 2025, JBES) |
-| Outcome / treatment models | linear, logit, Poisson |
+| Outcome / treatment models | linear, logit, probit, Poisson; fractional-logit and fractional-probit for outcomes in `[0, 1]` |
 | Instrument propensity score models (`ivmodel`) | logit MLE (default), CBPS, IPT; probit MLE for the weighting estimators |
 | Weighting | normalized (default) or unnormalized moments; sampling weights |
 | Standard errors | joint sandwich over all estimation stages; robust or cluster-robust |

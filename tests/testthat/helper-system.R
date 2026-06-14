@@ -5,10 +5,9 @@
 expect_valid_system <- function(formY, formD, formZ, data, ...) {
   args <- list(...)
   fit <- drlate(formY, formD, formZ, data = data, ...)
-  fam <- c(linear = "gaussian", logit = "binomial", poisson = "poisson")
   ctx <- build_ctx(formY, formD, formZ, data,
-                   omodel = fam[[args$omodel %||% "linear"]],
-                   tmodel = fam[[args$tmodel %||% "logit"]],
+                   omodel = args$omodel %||% "linear",
+                   tmodel = args$tmodel %||% "logit",
                    ivmodel = args$ivmodel %||% "logit",
                    method = args$method %||% "ipwra",
                    estimand = "late",

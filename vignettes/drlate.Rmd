@@ -35,8 +35,10 @@ The estimation core supports:
   (kappalate's `tau_a`), `"kappa0"` (`tau_a,0`), and `"kappa10"`
   (`tau_a,10`); together with the two IPW variants (= `tau_u` and
   `tau_a,1`) these complete the five-estimator menu of the 2025 paper.
-* **Outcome and treatment models**: linear, logistic, or Poisson, so the
-  outcome and the treatment may each be continuous, binary, or a count.
+* **Outcome and treatment models**: linear, logistic, probit, or Poisson,
+  plus fractional-logit and fractional-probit for outcomes in `[0, 1]`, so the
+  response may be continuous, binary, a count, or a proportion (matching the
+  Stata `lateffects` `omodel`/`tmodel` options).
 * **Instrument propensity score models** (`ivmodel`): logistic regression by
   maximum likelihood (default), covariate balancing (`"cbps"`, Imai and
   Ratkovic 2014), inverse probability tilting (`"ipt"`, Graham, Pinto,

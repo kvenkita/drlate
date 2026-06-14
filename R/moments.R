@@ -141,20 +141,28 @@ rw_odds <- function(ctx, eq = "zhat", X = NULL) {
 # ---------------------------------------------------------------------------
 
 #' Weighted GLM score restricted to one instrument arm:
-#'   arm_indicator * reweight(theta) * (yvar - mu(X beta)) * X
-#' One constructor covers eqy0/eqy1/eqd0/eqd1 across IPWRA, RA, AIPW and the
-#' regression pieces of LATT; the (family, arm, reweight) triple is the
-#' entire variation between Stata's ~40 hand-written gmm equation strings.
+#'   arm_indicator * reweight(theta) * working_residual(theta) * X
+#' where the working residual is (y - mu) for the canonical links (gaussian,
+#' logit, poisson) and (y - mu) / (mu (1 - mu)) * phi(X beta) for the probit
+#' link (the non-canonical quasi-likelihood score, identical in form to the
+#' probit instrument-PS block). One constructor covers eqy0/eqy1/eqd0/eqd1
+#' across IPWRA, RA, AIPW and the regression pieces of LATT; the
+#' (link, arm, reweight) triple is the entire variation between Stata's ~40
+#' hand-written gmm equation strings.
 #' @noRd
-make_glm_block <- function(ctx, eq, family, X, yvar, arm, reweight, coefs,
+make_glm_block <- function(ctx, eq, link, X, yvar, arm, reweight, coefs,
                            arm_var = NULL) {
-  linkinv <- fam_linkinv(family)
+  linkinv <- fam_linkinv(link)
+  probit <- identical(link, "probit")
   av <- if (is.null(arm_var)) ctx$z else arm_var
   a <- if (is.null(arm)) rep(1, ctx$n) else if (arm == 1) av else 1 - av
   new_block(eq, paste0(eq, ":", colnames(X)), coefs,
     function(theta, layout) {
-      mu <- linkinv(lc(theta, layout, eq, X))
-      (a * reweight(theta, layout) * (yvar - mu)) * X
+      xb <- lc(theta, layout, eq, X)
+      mu <- linkinv(xb)
+      resid <- if (probit) (yvar - mu) / (mu * (1 - mu)) * stats::dnorm(xb)
+               else yvar - mu
+      (a * reweight(theta, layout) * resid) * X
     })
 }
 

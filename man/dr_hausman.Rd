@@ -30,11 +30,15 @@ propensity score model; \code{z} must be binary 0/1. Use \code{z ~ 1} when
 
 \item{data}{A data frame containing all variables.}
 
-\item{omodel}{Outcome model family: \code{"linear"} (default), \code{"logit"}
-(outcome must be 0/1), or \code{"poisson"} (outcome must be non-negative).}
+\item{omodel}{Outcome model family: \code{"linear"} (default; continuous),
+\code{"logit"} or \code{"probit"} (outcome must be 0/1), \code{"poisson"} (outcome must
+be non-negative), or \code{"flogit"} / \code{"fprobit"} (fractional outcome in
+\verb{[0, 1]}, e.g. a proportion). The \code{f}-prefixed families share all
+estimation with \code{"logit"} / \code{"probit"} and only relax the response to the
+unit interval, matching the \pkg{Stata} \code{lateffects} \code{omodel} options.}
 
 \item{tmodel}{Treatment model family: \code{"logit"} (default; treatment must
-be 0/1), \code{"linear"}, or \code{"poisson"}.}
+be 0/1), \code{"probit"}, \code{"linear"}, or \code{"poisson"}.}
 
 \item{ivmodel}{Instrument propensity score model for the LATT half:
 \code{"logit"} (default) or \code{"ipt"}.}

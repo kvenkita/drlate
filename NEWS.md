@@ -1,5 +1,17 @@
 # drlate (development version)
 
+New outcome and treatment model families, completing parity with the Stata
+`lateffects` `omodel`/`tmodel` options:
+
+* `omodel` gains `"probit"` (binary outcome, probit link) and `"flogit"` /
+  `"fprobit"` for **fractional** outcomes in `[0, 1]` (e.g. proportions or
+  rates). `tmodel` gains `"probit"`. The fractional families share all
+  estimation with their binary counterparts and only relax the response to the
+  unit interval. These families are internally validated (the probit
+  quasi-likelihood score is the one already used for the probit instrument
+  propensity score); direct numerical parity with `lateffects` is planned for a
+  later release.
+
 Postestimation diagnostics mirroring the Stata `lateffects` suite (StataNow):
 
 * `complier_means()` reports population versus complier covariate means, the

@@ -16,6 +16,31 @@ wsd <- function(x, w) {
 #' @noRd
 wvar <- function(x, w) wsd(x, w)^2
 
+#' User-facing outcome/treatment model names mapped to the internal link
+#' token, the required response domain, and a printed label. The estimation
+#' machinery is link-driven, so the fractional families (flogit, fprobit)
+#' share all fit/predict/score code with their binary counterparts (logit,
+#' probit) and differ only in the allowed response domain and the label.
+#' @noRd
+.drlate_models <- list(
+  linear  = list(link = "gaussian", domain = "real",   label = "linear"),
+  logit   = list(link = "logit",    domain = "binary", label = "logit"),
+  probit  = list(link = "probit",   domain = "binary", label = "probit"),
+  poisson = list(link = "poisson",  domain = "nonneg", label = "poisson"),
+  flogit  = list(link = "logit",    domain = "unit",
+                 label = "fractional logit"),
+  fprobit = list(link = "probit",   domain = "unit",
+                 label = "fractional probit")
+)
+
+#' Internal link token for a user-facing model name
+#' @noRd
+model_link <- function(model) .drlate_models[[model]]$link
+
+#' Printed label for a user-facing model name
+#' @noRd
+model_label <- function(model) .drlate_models[[model]]$label
+
 #' Check that a variable takes exactly the values 0 and 1
 #' @noRd
 check_binary <- function(x, name, role) {
@@ -26,13 +51,28 @@ check_binary <- function(x, name, role) {
   invisible(TRUE)
 }
 
-#' Validate a response against its model family, mirroring drlate_estimate.ado
+#' Check that a variable lies in the unit interval [0, 1] (fractional models)
 #' @noRd
-check_family <- function(x, name, family, role) {
-  if (family == "binomial") check_binary(x, name, role)
-  if (family == "poisson" && any(x < 0)) {
-    stop(sprintf("%s `%s` must be non-negative for the poisson model.",
-                 name, role), call. = FALSE)
+check_fractional <- function(x, name, role) {
+  if (any(x < 0 | x > 1)) {
+    stop(sprintf("%s `%s` must lie in [0, 1] for a fractional model.",
+                 role, name), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+#' Validate a response against its (user-facing) model family, mirroring
+#' drlate_estimate.ado
+#' @noRd
+check_family <- function(x, name, model, role) {
+  domain <- .drlate_models[[model]]$domain
+  if (domain == "binary") {
+    check_binary(x, name, role)
+  } else if (domain == "unit") {
+    check_fractional(x, name, role)
+  } else if (domain == "nonneg" && any(x < 0)) {
+    stop(sprintf("%s `%s` must be non-negative for the %s model.",
+                 role, name, model), call. = FALSE)
   }
   invisible(TRUE)
 }
@@ -57,14 +97,15 @@ standardize_mm <- function(X, w) {
   X
 }
 
-#' Map drlate model strings to family handles used internally
+#' Inverse-link for an internal link token
 #' @noRd
-fam_linkinv <- function(family) {
-  switch(family,
+fam_linkinv <- function(link) {
+  switch(link,
     gaussian = identity,
-    binomial = stats::plogis,
+    logit    = stats::plogis,
+    probit   = stats::pnorm,
     poisson  = exp,
-    stop("unknown family: ", family)
+    stop("unknown link: ", link)
   )
 }
 

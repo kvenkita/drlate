@@ -16,10 +16,14 @@
 #'   propensity score model; `z` must be binary 0/1. Use `z ~ 1` when
 #'   `method = "ra"`.
 #' @param data A data frame containing all variables.
-#' @param omodel Outcome model family: `"linear"` (default), `"logit"`
-#'   (outcome must be 0/1), or `"poisson"` (outcome must be non-negative).
+#' @param omodel Outcome model family: `"linear"` (default; continuous),
+#'   `"logit"` or `"probit"` (outcome must be 0/1), `"poisson"` (outcome must
+#'   be non-negative), or `"flogit"` / `"fprobit"` (fractional outcome in
+#'   `[0, 1]`, e.g. a proportion). The `f`-prefixed families share all
+#'   estimation with `"logit"` / `"probit"` and only relax the response to the
+#'   unit interval, matching the \pkg{Stata} `lateffects` `omodel` options.
 #' @param tmodel Treatment model family: `"logit"` (default; treatment must
-#'   be 0/1), `"linear"`, or `"poisson"`.
+#'   be 0/1), `"probit"`, `"linear"`, or `"poisson"`.
 #' @param ivmodel Instrument propensity score model: `"logit"` (maximum
 #'   likelihood; default), `"cbps"` (covariate balancing, Imai and Ratkovic
 #'   2014; not available with `estimand = "latt"`), `"ipt"` (inverse
@@ -107,8 +111,9 @@
 #'
 #' @export
 drlate <- function(outcome, treatment, instrument, data,
-                   omodel = c("linear", "logit", "poisson"),
-                   tmodel = c("logit", "linear", "poisson"),
+                   omodel = c("linear", "logit", "probit", "poisson",
+                              "flogit", "fprobit"),
+                   tmodel = c("logit", "probit", "linear", "poisson"),
                    ivmodel = c("logit", "cbps", "ipt", "probit"),
                    method = c("ipwra", "ipw", "aipw", "ra",
                               "kappa", "kappa0", "kappa10"),
@@ -127,9 +132,6 @@ drlate <- function(outcome, treatment, instrument, data,
   method <- match.arg(method)
   estimand <- match.arg(estimand)
 
-  # Map user-facing names to internal family strings
-  fam <- c(linear = "gaussian", logit = "binomial", poisson = "poisson")
-
   if (!is.null(subset)) data <- data[subset, , drop = FALSE]
   if (is.character(weights) && length(weights) == 1L) {
     weights <- data[[weights]]
@@ -139,7 +141,7 @@ drlate <- function(outcome, treatment, instrument, data,
   }
 
   ctx <- build_ctx(outcome, treatment, instrument, data,
-                   omodel = fam[[omodel]], tmodel = fam[[tmodel]],
+                   omodel = omodel, tmodel = tmodel,
                    ivmodel = ivmodel, method = method, estimand = estimand,
                    normalized = normalized, weights = weights,
                    cluster = cluster, pstolerance = pstolerance,

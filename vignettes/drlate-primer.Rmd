@@ -290,9 +290,9 @@ plot(fit, type = "weights")
 
 ### Outcome and treatment families
 
-The treatment and the outcome may each be continuous, binary, or a count;
-choose families so fitted values respect the response's range — the heart
-of the IPWRA recommendation:
+The treatment and the outcome may each be continuous, binary, a count, or a
+fraction; choose families so fitted values respect the response's range — the
+heart of the IPWRA recommendation:
 
 ```{r}
 # Binary outcome: logit keeps fitted probabilities in [0, 1]
@@ -303,6 +303,12 @@ coef(drlate(hijob ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
 coef(drlate(kwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
             data = drlate_sim, omodel = "poisson"))
 ```
+
+Binary outcomes also accept `omodel = "probit"`, and a response confined to
+the unit interval — a proportion or rate — uses `omodel = "flogit"` or
+`"fprobit"`. The fractional families share all estimation with `"logit"` /
+`"probit"` and only relax the response to `[0, 1]`, matching the Stata
+`lateffects` `omodel` options.
 
 ### Instrument propensity score flavors
 
