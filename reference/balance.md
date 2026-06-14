@@ -12,7 +12,7 @@ that the propensity score model is doing its job.
 balance(object, ...)
 
 # S3 method for class 'drlate'
-balance(object, ...)
+balance(object, detail = FALSE, ...)
 ```
 
 ## Arguments
@@ -27,10 +27,19 @@ balance(object, ...)
 
   Currently unused.
 
+- detail:
+
+  Logical. If `TRUE`, append the IPW-weighted arm means
+  (`mean_weighted_z1`, `mean_weighted_z0`) and the unweighted and
+  weighted variance ratios (`vratio_unweighted`, `vratio_weighted`, each
+  \\s_1^2 / s_0^2\\), mirroring the Stata `latebalance summarize`
+  report. Defaults to `FALSE`.
+
 ## Value
 
 A data frame with one row per covariate and columns `variable`,
-`smd_unweighted`, and `smd_weighted`.
+`smd_unweighted`, and `smd_weighted`; with `detail = TRUE`, the four
+additional columns described above.
 
 ## Details
 

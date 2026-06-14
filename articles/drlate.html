@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">drlate</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,9 +98,12 @@ regression adjustment (<code>"ra"</code>).</li>
 <code>tau_u</code> and <code>tau_a,1</code>) these complete the
 five-estimator menu of the 2025 paper.</li>
 <li>
-<strong>Outcome and treatment models</strong>: linear, logistic, or
-Poisson, so the outcome and the treatment may each be continuous,
-binary, or a count.</li>
+<strong>Outcome and treatment models</strong>: linear, logistic,
+probit, or Poisson, plus fractional-logit and fractional-probit for
+outcomes in <code>[0, 1]</code>, so the response may be continuous,
+binary, a count, or a proportion (matching the Stata
+<code>lateffects</code> <code>omodel</code>/<code>tmodel</code>
+options).</li>
 <li>
 <strong>Instrument propensity score models</strong>
 (<code>ivmodel</code>): logistic regression by maximum likelihood
@@ -121,8 +124,9 @@ cluster-robust standard errors:</p>
 <li>
 <strong>Diagnostics</strong>: <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> displays of
 propensity-score overlap, covariate balance, and implied weights;
-<code><a href="../reference/balance.html">balance()</a></code> tables; first-stage strength on every
-printout.</li>
+<code><a href="../reference/balance.html">balance()</a></code> tables and the <code><a href="../reference/balance_test.html">balance_test()</a></code>
+overidentification balance test; <code><a href="../reference/complier_means.html">complier_means()</a></code> complier
+profiling; first-stage strength on every printout.</li>
 <li>
 <strong>Weak-instrument-robust inference</strong>: Fieller
 confidence sets via <code>confint(method = "fieller")</code> (for the
@@ -374,6 +378,25 @@ returns the standardized mean differences as a data frame:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"overlap"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="drlate_files/figure-html/diag-overlap-1.png" class="r-plt" alt="" width="100%"></p>
+<p><code><a href="../reference/complier_means.html">complier_means()</a></code> profiles how the compliers differ from
+the population (weighting by Abadie’s kappa), and
+<code><a href="../reference/balance_test.html">balance_test()</a></code> runs the Imai–Ratkovic overidentification
+test of whether the propensity-score model balances the covariates —
+diagnostics that mirror the postestimation suite of Stata’s
+<code>lateffects</code> command:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/complier_means.html">complier_means</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt;       variable population_mean complier_mean   difference</span></span>
+<span><span class="co">#&gt; 1          age         34.5560    34.3303393 -0.225660695</span></span>
+<span><span class="co">#&gt; 2  educcollege          0.3615     0.3590211 -0.002478943</span></span>
+<span><span class="co">#&gt; 3 educgraduate          0.1395     0.1431700  0.003670025</span></span>
+<span><span class="fu"><a href="../reference/balance_test.html">balance_test</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Imai-Ratkovic covariate-balance test (overidentification)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Hansen J = 3.0473   df = 4   p-value = 0.5499</span></span>
+<span><span class="co">#&gt;   Instrument propensity score: logit (n = 2000)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   H0: the propensity-score model balances the covariates.</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="inference-beyond-the-default-sandwich">Inference beyond the default sandwich<a class="anchor" aria-label="anchor" href="#inference-beyond-the-default-sandwich"></a>
@@ -381,7 +404,7 @@ returns the standardized mean differences as a data frame:</p>
 <p>Every printout reports the first-stage z (with z² ≈ F for a single
 binary instrument) and flags weakness below F = 10. The package adds two
 inference tools:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Weak-instrument-robust Fieller confidence set (may be unbounded when</span></span>
 <span><span class="co"># the first stage is weak -- that is the honest answer)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span>, method <span class="op">=</span> <span class="st">"fieller"</span><span class="op">)</span></span>
@@ -408,7 +431,7 @@ ATT if treatment assignment is unconfounded given the covariates.
 Section 5 of the 2022 paper turns this equality into a
 heterogeneity-robust Hausman test, implemented here; the Stata package
 does not provide it:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d_os</span> <span class="op">&lt;-</span> <span class="va">drlate_sim</span></span>
 <span><span class="va">d_os</span><span class="op">$</span><span class="va">nvstat</span><span class="op">[</span><span class="va">d_os</span><span class="op">$</span><span class="va">rsncode</span> <span class="op">==</span> <span class="fl">0</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0L</span></span>
 <span><span class="fu"><a href="../reference/dr_hausman.html">dr_hausman</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
@@ -429,7 +452,7 @@ rejects.</p>
 <div class="section level2">
 <h2 id="comparing-estimators">Comparing estimators<a class="anchor" aria-label="anchor" href="#comparing-estimators"></a>
 </h2>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cmp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drlate_compare.html">drlate_compare</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
 <span>                      <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, data <span class="op">=</span> <span class="va">drlate_sim</span><span class="op">)</span></span>
 <span><span class="co">#&gt; method = "ipw": dropping outcome/treatment covariates (weighted means only).</span></span>
@@ -451,7 +474,7 @@ rejects.</p>
 <p>The Stata help file’s examples use a public extract from the Survey
 of Income and Program Participation (SIPP). The equivalent R calls
 are:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sipp</span> <span class="op">&lt;-</span> <span class="fu">haven</span><span class="fu">::</span><span class="fu"><a href="https://haven.tidyverse.org/reference/read_dta.html" class="external-link">read_dta</a></span><span class="op">(</span><span class="st">"https://people.brandeis.edu/~tslocz/sipp.dta"</span><span class="op">)</span></span>
 <span><span class="va">sipp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">sipp</span><span class="op">)</span>,</span>
 <span>               <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">kwage</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">educ</span><span class="op">)</span> <span class="op">&amp;</span> <span class="va">rsncode</span> <span class="op">!=</span> <span class="fl">999</span><span class="op">)</span></span>
@@ -494,7 +517,7 @@ Effect. <em>Journal of Business &amp; Economic Statistics</em> 43(1),
 164–177.</p>
 </blockquote>
 <blockquote>
-<p>Uysal, D., Słoczyński, T., &amp; Wooldridge, J. M. (2024). DRLATE:
+<p>Uysal, D., Słoczyński, T., &amp; Wooldridge, J. M. (2026). DRLATE:
 Stata module to perform doubly robust estimation of the local average
 treatment effect (LATE) and the local average treatment effect on the
 treated (LATT). Statistical Software Components S459708, Boston College

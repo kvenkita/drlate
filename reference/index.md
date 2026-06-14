@@ -17,6 +17,17 @@ Check overlap, balance, weights, and instrument strength.
   : Diagnostic plots for drlate fits
 - [`balance()`](https://kvenkita.github.io/drlate/reference/balance.md)
   : Covariate balance across instrument arms
+- [`balance_test()`](https://kvenkita.github.io/drlate/reference/balance_test.md)
+  : Imai-Ratkovic covariate-balance test
+
+## Complier profiling
+
+Characterize the complier subpopulation via Abadie’s kappa.
+
+- [`complier_means()`](https://kvenkita.github.io/drlate/reference/complier_means.md)
+  : Complier covariate means
+- [`kappa_weights()`](https://kvenkita.github.io/drlate/reference/kappa_weights.md)
+  : Abadie's kappa weights
 
 ## Inference
 

@@ -52,13 +52,17 @@ dr_hausman(
 
 - omodel:
 
-  Outcome model family: `"linear"` (default), `"logit"` (outcome must be
-  0/1), or `"poisson"` (outcome must be non-negative).
+  Outcome model family: `"linear"` (default; continuous), `"logit"` or
+  `"probit"` (outcome must be 0/1), `"poisson"` (outcome must be
+  non-negative), or `"flogit"` / `"fprobit"` (fractional outcome in
+  `[0, 1]`, e.g. a proportion). The `f`-prefixed families share all
+  estimation with `"logit"` / `"probit"` and only relax the response to
+  the unit interval, matching the Stata `lateffects` `omodel` options.
 
 - tmodel:
 
   Treatment model family: `"logit"` (default; treatment must be 0/1),
-  `"linear"`, or `"poisson"`.
+  `"probit"`, `"linear"`, or `"poisson"`.
 
 - ivmodel:
 

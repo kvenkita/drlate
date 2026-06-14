@@ -1,5 +1,49 @@
 # Changelog
 
+## drlate (development version)
+
+New outcome and treatment model families, completing parity with the
+Stata `lateffects` `omodel`/`tmodel` options:
+
+- `omodel` gains `"probit"` (binary outcome, probit link) and `"flogit"`
+  / `"fprobit"` for **fractional** outcomes in `[0, 1]`
+  (e.g. proportions or rates). `tmodel` gains `"probit"`. The fractional
+  families share all estimation with their binary counterparts and only
+  relax the response to the unit interval. They reuse the probit/logit
+  quasi-likelihood scoring already validated for the instrument
+  propensity score, and the test suite checks them against first
+  principles: the fractional families coincide with their binary
+  counterparts on a 0/1 response, and every fit reproduces the
+  corresponding weighted `glm` estimate.
+
+Postestimation diagnostics mirroring the Stata `lateffects` suite
+(StataNow):
+
+- [`complier_means()`](https://kvenkita.github.io/drlate/reference/complier_means.md)
+  reports population versus complier covariate means, the complier
+  averages computed with the normalized Abadie-kappa weights (Stata’s
+  `estat compliers`).
+  [`kappa_weights()`](https://kvenkita.github.io/drlate/reference/kappa_weights.md)
+  returns those weights (the `genkappa` object) for use in other
+  complier summaries.
+- [`balance_test()`](https://kvenkita.github.io/drlate/reference/balance_test.md)
+  implements the Imai and Ratkovic (2014) overidentification test for
+  whether the instrument propensity score balances the covariates
+  (Stata’s `latebalance overid`); cluster-robust when the fit is.
+- `balance(detail = TRUE)` adds IPW-weighted arm means and unweighted
+  and weighted variance ratios alongside the standardized mean
+  differences (Stata’s `latebalance summarize`).
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) gains
+  `type = "balance_density"` (covariate kernel densities by instrument
+  arm, raw versus weighted; Stata’s `latebalance density`) and a
+  `geom = "density"` option for `type = "overlap"` (Stata’s
+  `lateoverlap`).
+
+These diagnostics are verified against their standard references: the
+Abadie-kappa identity for the complier means, the Imai and Ratkovic
+(2014) statistic for the balance test, and the bootstrap for the
+standard errors.
+
 ## drlate 0.2.0
 
 - New kappa-weighting estimators of the LATE from Słoczyński, Uysal, and

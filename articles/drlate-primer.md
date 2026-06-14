@@ -226,8 +226,11 @@ Either way the estimate stays near 0.5: one correct model is enough.
 ## 4. Checking the design: diagnostics
 
 An estimate deserves evidence that the design behind it is sound.
-[`plot()`](https://rdrr.io/r/graphics/plot.default.html) provides the
-three standard displays.
+`drlate` provides the standard design diagnostics — propensity-score
+overlap, covariate balance, and the implied weight distribution —
+together with a formal balance test and a profile of the compliers. The
+last several mirror the postestimation tools of Stata’s `lateffects`
+command.
 
 ### Overlap
 
@@ -246,7 +249,8 @@ plot(fit, type = "overlap")
 refuses to estimate if any score breaches
 `[pstolerance, 1 - pstolerance]`; set `osample = TRUE` to get back an
 indicator of the violating observations instead, so you can inspect them
-before restricting the sample.
+before restricting the sample. Pass `geom = "density"` to draw the same
+check as smoothed kernel densities.
 
 ### Covariate balance
 
@@ -276,7 +280,18 @@ balance(fit)
 ```
 
 `age` moves from a standardized difference of 0.45 to nearly zero after
-weighting.
+weighting. Add `detail = TRUE` for the weighted arm means and variance
+ratios as well. To see distributions rather than summaries,
+`plot(fit, type = "balance_density")` overlays each covariate’s kernel
+density across the instrument arms, raw versus weighted — a balanced
+covariate has arm densities that coincide in the weighted panel:
+
+``` r
+
+plot(fit, type = "balance_density", var = "age")
+```
+
+![](drlate-primer_files/figure-html/balance-density-1.png)
 
 ### Weight distributions
 
@@ -290,13 +305,53 @@ plot(fit, type = "weights")
 
 ![](drlate-primer_files/figure-html/weights-1.png)
 
+### A formal balance test
+
+The love plot is an eyeball test;
+[`balance_test()`](https://kvenkita.github.io/drlate/reference/balance_test.md)
+is the formal one. It implements the Imai and Ratkovic (2014)
+overidentification test of whether the propensity-score model balances
+the covariates. A small p-value is evidence that the score is
+misspecified:
+
+``` r
+
+balance_test(fit)
+#> Imai-Ratkovic covariate-balance test (overidentification)
+#> 
+#>   Hansen J = 3.0473   df = 4   p-value = 0.5499
+#>   Instrument propensity score: logit (n = 2000)
+#> 
+#>   H0: the propensity-score model balances the covariates.
+```
+
+### Profiling the compliers
+
+Because the LATE is an effect for compliers, it helps to know how they
+differ from the population.
+[`complier_means()`](https://kvenkita.github.io/drlate/reference/complier_means.md)
+compares each covariate’s overall mean with its mean among compliers,
+the latter weighted by Abadie’s $`\kappa`$:
+
+``` r
+
+complier_means(fit)
+#>       variable population_mean complier_mean   difference
+#> 1          age         34.5560    34.3303393 -0.225660695
+#> 2  educcollege          0.3615     0.3590211 -0.002478943
+#> 3 educgraduate          0.1395     0.1431700  0.003670025
+```
+
+The weights themselves are available through `kappa_weights(fit)` for
+building other complier summaries.
+
 ## 5. Choosing models and options
 
 ### Outcome and treatment families
 
-The treatment and the outcome may each be continuous, binary, or a
-count; choose families so fitted values respect the response’s range —
-the heart of the IPWRA recommendation:
+The treatment and the outcome may each be continuous, binary, a count,
+or a fraction; choose families so fitted values respect the response’s
+range — the heart of the IPWRA recommendation:
 
 ``` r
 
@@ -312,6 +367,12 @@ coef(drlate(kwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
 #> LATE: D on Y  ATE: Z on Y  ATE: Z on D 
 #>    0.6088370    0.3682338    0.6048151
 ```
+
+Binary outcomes also accept `omodel = "probit"`, and a response confined
+to the unit interval — a proportion or rate — uses `omodel = "flogit"`
+or `"fprobit"`. The fractional families share all estimation with
+`"logit"` / `"probit"` and only relax the response to `[0, 1]`, matching
+the Stata `lateffects` `omodel` options.
 
 ### Instrument propensity score flavors
 
@@ -630,13 +691,21 @@ for a nominal 5% level.)
 | `kappalate ...` (tau_u / tau_a,1) | `method = "ipw"` / `"ipw", normalized = FALSE` |
 | `kappalate ..., zmodel(cbps)` | `ivmodel = "cbps"` |
 | `kappalate ..., zmodel(probit)` | `ivmodel = "probit"` |
-| — | [`plot()`](https://rdrr.io/r/graphics/plot.default.html), [`balance()`](https://kvenkita.github.io/drlate/reference/balance.md), `confint(method = "fieller")`, `vcov = "bootstrap"`, [`dr_hausman()`](https://kvenkita.github.io/drlate/reference/dr_hausman.md), [`drlate_compare()`](https://kvenkita.github.io/drlate/reference/drlate_compare.md) (R only) |
+| `lateoverlap` | `plot(type = "overlap")` (with `geom = "density"`) |
+| `latebalance summarize` | `balance(detail = TRUE)` |
+| `latebalance overid` | [`balance_test()`](https://kvenkita.github.io/drlate/reference/balance_test.md) |
+| `latebalance density` | `plot(type = "balance_density")` |
+| `estat compliers` | [`complier_means()`](https://kvenkita.github.io/drlate/reference/complier_means.md), [`kappa_weights()`](https://kvenkita.github.io/drlate/reference/kappa_weights.md) |
+| — | `plot(type = "weights")`, `confint(method = "fieller")`, `vcov = "bootstrap"`, [`dr_hausman()`](https://kvenkita.github.io/drlate/reference/dr_hausman.md), [`drlate_compare()`](https://kvenkita.github.io/drlate/reference/drlate_compare.md) (R only) |
 
-Point estimates and standard errors agree with the Stata packages to
-numerical precision; the package’s test suite enforces this against
-fixtures generated by Stata’s `drlate` *and* `kappalate` on the Survey
+Point estimates and standard errors agree with the Stata `drlate` and
+`kappalate` packages to numerical precision; the package’s test suite
+enforces this against fixtures generated by those commands on the Survey
 of Income and Program Participation (SIPP) extract used in the original
-help files.
+help files. The postestimation diagnostics in the lower rows mirror
+Stata’s `lateffects` suite (StataNow) and are verified against their
+standard references — weighted `glm` fits, the Abadie-kappa identity,
+and the bootstrap.
 
 ## References
 

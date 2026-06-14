@@ -22,8 +22,11 @@ The estimation core supports:
   (kappalate’s `tau_a`), `"kappa0"` (`tau_a,0`), and `"kappa10"`
   (`tau_a,10`); together with the two IPW variants (= `tau_u` and
   `tau_a,1`) these complete the five-estimator menu of the 2025 paper.
-- **Outcome and treatment models**: linear, logistic, or Poisson, so the
-  outcome and the treatment may each be continuous, binary, or a count.
+- **Outcome and treatment models**: linear, logistic, probit, or
+  Poisson, plus fractional-logit and fractional-probit for outcomes in
+  `[0, 1]`, so the response may be continuous, binary, a count, or a
+  proportion (matching the Stata `lateffects` `omodel`/`tmodel`
+  options).
 - **Instrument propensity score models** (`ivmodel`): logistic
   regression by maximum likelihood (default), covariate balancing
   (`"cbps"`, Imai and Ratkovic 2014), inverse probability tilting
@@ -41,7 +44,11 @@ errors:
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html) displays of
   propensity-score overlap, covariate balance, and implied weights;
   [`balance()`](https://kvenkita.github.io/drlate/reference/balance.md)
-  tables; first-stage strength on every printout.
+  tables and the
+  [`balance_test()`](https://kvenkita.github.io/drlate/reference/balance_test.md)
+  overidentification balance test;
+  [`complier_means()`](https://kvenkita.github.io/drlate/reference/complier_means.md)
+  complier profiling; first-stage strength on every printout.
 - **Weak-instrument-robust inference**: Fieller confidence sets via
   `confint(method = "fieller")` (for the ratio-form estimators,
   including `"kappa"` and `"kappa0"`).
@@ -311,6 +318,30 @@ plot(fit, type = "overlap")
 
 ![](drlate_files/figure-html/diag-overlap-1.png)
 
+[`complier_means()`](https://kvenkita.github.io/drlate/reference/complier_means.md)
+profiles how the compliers differ from the population (weighting by
+Abadie’s kappa), and
+[`balance_test()`](https://kvenkita.github.io/drlate/reference/balance_test.md)
+runs the Imai–Ratkovic overidentification test of whether the
+propensity-score model balances the covariates — diagnostics that mirror
+the postestimation suite of Stata’s `lateffects` command:
+
+``` r
+
+complier_means(fit)
+#>       variable population_mean complier_mean   difference
+#> 1          age         34.5560    34.3303393 -0.225660695
+#> 2  educcollege          0.3615     0.3590211 -0.002478943
+#> 3 educgraduate          0.1395     0.1431700  0.003670025
+balance_test(fit)
+#> Imai-Ratkovic covariate-balance test (overidentification)
+#> 
+#>   Hansen J = 3.0473   df = 4   p-value = 0.5499
+#>   Instrument propensity score: logit (n = 2000)
+#> 
+#>   H0: the propensity-score model balances the covariates.
+```
+
 ## Inference beyond the default sandwich
 
 Every printout reports the first-stage z (with z² ≈ F for a single
@@ -436,7 +467,7 @@ module (see `citation("drlate")` for BibTeX entries):
 > Kappa and Weighting Estimators of the Local Average Treatment Effect.
 > *Journal of Business & Economic Statistics* 43(1), 164–177.
 
-> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2024). DRLATE: Stata
+> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2026). DRLATE: Stata
 > module to perform doubly robust estimation of the local average
 > treatment effect (LATE) and the local average treatment effect on the
 > treated (LATT). Statistical Software Components S459708, Boston

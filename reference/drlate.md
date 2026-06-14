@@ -17,8 +17,8 @@ drlate(
   treatment,
   instrument,
   data,
-  omodel = c("linear", "logit", "poisson"),
-  tmodel = c("logit", "linear", "poisson"),
+  omodel = c("linear", "logit", "probit", "poisson", "flogit", "fprobit"),
+  tmodel = c("logit", "probit", "linear", "poisson"),
   ivmodel = c("logit", "cbps", "ipt", "probit"),
   method = c("ipwra", "ipw", "aipw", "ra", "kappa", "kappa0", "kappa10"),
   estimand = c("late", "latt"),
@@ -58,13 +58,17 @@ drlate(
 
 - omodel:
 
-  Outcome model family: `"linear"` (default), `"logit"` (outcome must be
-  0/1), or `"poisson"` (outcome must be non-negative).
+  Outcome model family: `"linear"` (default; continuous), `"logit"` or
+  `"probit"` (outcome must be 0/1), `"poisson"` (outcome must be
+  non-negative), or `"flogit"` / `"fprobit"` (fractional outcome in
+  `[0, 1]`, e.g. a proportion). The `f`-prefixed families share all
+  estimation with `"logit"` / `"probit"` and only relax the response to
+  the unit interval, matching the Stata `lateffects` `omodel` options.
 
 - tmodel:
 
   Treatment model family: `"logit"` (default; treatment must be 0/1),
-  `"linear"`, or `"poisson"`.
+  `"probit"`, `"linear"`, or `"poisson"`.
 
 - ivmodel:
 

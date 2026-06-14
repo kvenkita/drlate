@@ -15,7 +15,7 @@ that the propensity score model is doing its job."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">drlate</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,7 @@ that the propensity score model is doing its job.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">balance</span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'drlate'</span></span>
-<span><span class="fu">balance</span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">balance</span><span class="op">(</span><span class="va">object</span>, detail <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -73,11 +73,20 @@ that the propensity score model is doing its job.</p>
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Currently unused.</p></dd>
 
+
+<dt id="arg-detail">detail<a class="anchor" aria-label="anchor" href="#arg-detail"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, append the IPW-weighted arm means
+(<code>mean_weighted_z1</code>, <code>mean_weighted_z0</code>) and the unweighted and weighted
+variance ratios (<code>vratio_unweighted</code>, <code>vratio_weighted</code>, each
+\(s_1^2 / s_0^2\)), mirroring the Stata
+<code>latebalance summarize</code> report. Defaults to <code>FALSE</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with one row per covariate and columns
-<code>variable</code>, <code>smd_unweighted</code>, and <code>smd_weighted</code>.</p>
+<code>variable</code>, <code>smd_unweighted</code>, and <code>smd_weighted</code>; with <code>detail = TRUE</code>,
+the four additional columns described above.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

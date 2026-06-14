@@ -27,7 +27,7 @@ comparison is robust to treatment effect heterogeneity."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">drlate</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,13 +113,17 @@ propensity score model; <code>z</code> must be binary 0/1. Use <code>z ~ 1</code
 
 
 <dt id="arg-omodel">omodel<a class="anchor" aria-label="anchor" href="#arg-omodel"></a></dt>
-<dd><p>Outcome model family: <code>"linear"</code> (default), <code>"logit"</code>
-(outcome must be 0/1), or <code>"poisson"</code> (outcome must be non-negative).</p></dd>
+<dd><p>Outcome model family: <code>"linear"</code> (default; continuous),
+<code>"logit"</code> or <code>"probit"</code> (outcome must be 0/1), <code>"poisson"</code> (outcome must
+be non-negative), or <code>"flogit"</code> / <code>"fprobit"</code> (fractional outcome in
+<code>[0, 1]</code>, e.g. a proportion). The <code>f</code>-prefixed families share all
+estimation with <code>"logit"</code> / <code>"probit"</code> and only relax the response to the
+unit interval, matching the <span class="pkg">Stata</span> <code>lateffects</code> <code>omodel</code> options.</p></dd>
 
 
 <dt id="arg-tmodel">tmodel<a class="anchor" aria-label="anchor" href="#arg-tmodel"></a></dt>
 <dd><p>Treatment model family: <code>"logit"</code> (default; treatment must
-be 0/1), <code>"linear"</code>, or <code>"poisson"</code>.</p></dd>
+be 0/1), <code>"probit"</code>, <code>"linear"</code>, or <code>"poisson"</code>.</p></dd>
 
 
 <dt id="arg-ivmodel">ivmodel<a class="anchor" aria-label="anchor" href="#arg-ivmodel"></a></dt>

@@ -1,10 +1,11 @@
 # drlate
 
-`drlate` estimates the local average treatment effect (LATE) and the
-local average treatment effect on the treated (LATT) from observational
-data with a binary instrument. It implements the complete estimator
-program of Słoczyński, Uysal, and Wooldridge in one package: the doubly
-robust IPWRA/IPW/AIPW/RA estimators of [Słoczyński, Uysal & Wooldridge
+`drlate` provides **doubly robust** estimation of the local average
+treatment effect (LATE) and the local average treatment effect on the
+treated (LATT) from observational data with a binary instrument. It
+implements the complete estimator program of Słoczyński, Uysal, and
+Wooldridge in one package: the doubly robust IPWRA/IPW/AIPW/RA
+estimators of [Słoczyński, Uysal & Wooldridge
 (2022)](https://doi.org/10.48550/arXiv.2208.01300) and the Abadie-kappa
 weighting estimators of [Słoczyński, Uysal & Wooldridge (2025,
 *JBES*)](https://doi.org/10.1080/07350015.2024.2332763), behind a single
@@ -98,7 +99,7 @@ and the methodological papers whose estimators you use:
 
 The package descends from the authors’ Stata commands:
 
-> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2024). DRLATE: Stata
+> Uysal, D., Słoczyński, T., & Wooldridge, J. M. (2026). DRLATE: Stata
 > module to perform doubly robust estimation of the local average
 > treatment effect (LATE) and the local average treatment effect on the
 > treated (LATT). Statistical Software Components S459708, Boston
@@ -112,11 +113,12 @@ The package descends from the authors’ Stata commands:
 |----|----|
 | Estimands | LATE, LATT |
 | Estimators (`method`) | IPWRA (default), IPW, AIPW, RA; Abadie-kappa weighting: `kappa`, `kappa0`, `kappa10` (Słoczyński, Uysal & Wooldridge 2025, JBES) |
-| Outcome / treatment models | linear, logit, Poisson |
+| Outcome / treatment models | linear, logit, probit, Poisson; fractional-logit and fractional-probit for outcomes in `[0, 1]` |
 | Instrument propensity score models (`ivmodel`) | logit MLE (default), CBPS, IPT; probit MLE for the weighting estimators |
 | Weighting | normalized (default) or unnormalized moments; sampling weights |
 | Standard errors | joint sandwich over all estimation stages; robust or cluster-robust |
-| Diagnostics | `plot(fit)` for propensity-score overlap, covariate balance, and weight distributions; [`balance()`](https://kvenkita.github.io/drlate/reference/balance.md) tables; first-stage strength on every printout |
+| Diagnostics | `plot(fit)` for propensity-score overlap (histogram or density), covariate balance (love plot or per-covariate densities), and weight distributions; [`balance()`](https://kvenkita.github.io/drlate/reference/balance.md) / `balance(fit, detail = TRUE)` tables; [`balance_test()`](https://kvenkita.github.io/drlate/reference/balance_test.md) (Imai–Ratkovic overidentification balance test); first-stage strength on every printout |
+| Complier profiling | [`complier_means()`](https://kvenkita.github.io/drlate/reference/complier_means.md) for population-vs-complier covariate means; [`kappa_weights()`](https://kvenkita.github.io/drlate/reference/kappa_weights.md) for the underlying Abadie-kappa weights |
 | Fieller confidence sets | `confint(fit, method = "fieller")` — weak-instrument-robust; available for all ratio-form estimators including `kappa`/`kappa0` |
 | Bootstrap | `drlate(..., vcov = "bootstrap")` — cluster-aware percentile intervals |
 | DR Hausman test | [`dr_hausman()`](https://kvenkita.github.io/drlate/reference/dr_hausman.md) — test of unconfoundedness under one-sided noncompliance (2022 paper, Section 5) |
@@ -155,6 +157,17 @@ Check overlap, balance, weights, and instrument strength.
   : Diagnostic plots for drlate fits
 - [`balance()`](https://kvenkita.github.io/drlate/reference/balance.md)
   : Covariate balance across instrument arms
+- [`balance_test()`](https://kvenkita.github.io/drlate/reference/balance_test.md)
+  : Imai-Ratkovic covariate-balance test
+
+## Complier profiling
+
+Characterize the complier subpopulation via Abadie’s kappa.
+
+- [`complier_means()`](https://kvenkita.github.io/drlate/reference/complier_means.md)
+  : Complier covariate means
+- [`kappa_weights()`](https://kvenkita.github.io/drlate/reference/kappa_weights.md)
+  : Abadie's kappa weights
 
 ## Inference
 

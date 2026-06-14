@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">drlate</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,22 @@
       <small>Source: <a href="https://github.com/kvenkita/drlate/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="drlate-development-version">drlate (development version)<a class="anchor" aria-label="anchor" href="#drlate-development-version"></a></h2>
+<p>New outcome and treatment model families, completing parity with the Stata <code>lateffects</code> <code>omodel</code>/<code>tmodel</code> options:</p>
+<ul><li>
+<code>omodel</code> gains <code>"probit"</code> (binary outcome, probit link) and <code>"flogit"</code> / <code>"fprobit"</code> for <strong>fractional</strong> outcomes in <code>[0, 1]</code> (e.g. proportions or rates). <code>tmodel</code> gains <code>"probit"</code>. The fractional families share all estimation with their binary counterparts and only relax the response to the unit interval. They reuse the probit/logit quasi-likelihood scoring already validated for the instrument propensity score, and the test suite checks them against first principles: the fractional families coincide with their binary counterparts on a 0/1 response, and every fit reproduces the corresponding weighted <code>glm</code> estimate.</li>
+</ul><p>Postestimation diagnostics mirroring the Stata <code>lateffects</code> suite (StataNow):</p>
+<ul><li>
+<code><a href="../reference/complier_means.html">complier_means()</a></code> reports population versus complier covariate means, the complier averages computed with the normalized Abadie-kappa weights (Stata’s <code>estat compliers</code>). <code><a href="../reference/kappa_weights.html">kappa_weights()</a></code> returns those weights (the <code>genkappa</code> object) for use in other complier summaries.</li>
+<li>
+<code><a href="../reference/balance_test.html">balance_test()</a></code> implements the Imai and Ratkovic (2014) overidentification test for whether the instrument propensity score balances the covariates (Stata’s <code>latebalance overid</code>); cluster-robust when the fit is.</li>
+<li>
+<code>balance(detail = TRUE)</code> adds IPW-weighted arm means and unweighted and weighted variance ratios alongside the standardized mean differences (Stata’s <code>latebalance summarize</code>).</li>
+<li>
+<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> gains <code>type = "balance_density"</code> (covariate kernel densities by instrument arm, raw versus weighted; Stata’s <code>latebalance density</code>) and a <code>geom = "density"</code> option for <code>type = "overlap"</code> (Stata’s <code>lateoverlap</code>).</li>
+</ul><p>These diagnostics are verified against their standard references: the Abadie-kappa identity for the complier means, the Imai and Ratkovic (2014) statistic for the balance test, and the bootstrap for the standard errors.</p>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="drlate-020">drlate 0.2.0<a class="anchor" aria-label="anchor" href="#drlate-020"></a></h2>
 <ul><li>New kappa-weighting estimators of the LATE from Słoczyński, Uysal, and Wooldridge (2025, <em>JBES</em> 43(1), 164-177): <code>method = "kappa"</code> (tau_a), <code>"kappa0"</code> (tau_a,0), and <code>"kappa10"</code> (tau_a,10), validated against the Stata <code>kappalate</code> command. Cluster-robust SEs, sampling weights, the bootstrap, and (for <code>"kappa"</code>/<code>"kappa0"</code>) Fieller confidence sets carry over from the existing machinery.</li>
