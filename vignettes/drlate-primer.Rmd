@@ -204,8 +204,11 @@ Either way the estimate stays near 0.5: one correct model is enough.
 
 ## 4. Checking the design: diagnostics
 
-An estimate deserves evidence that the design behind it is sound.
-`plot()` provides the three standard displays.
+An estimate deserves evidence that the design behind it is sound. `drlate`
+provides the standard design diagnostics — propensity-score overlap, covariate
+balance, and the implied weight distribution — together with a formal balance
+test and a profile of the compliers. The last several mirror the postestimation
+tools of Stata's `lateffects` command.
 
 ### Overlap
 
@@ -252,6 +255,15 @@ covariate has arm densities that coincide in the weighted panel:
 plot(fit, type = "balance_density", var = "age")
 ```
 
+### Weight distributions
+
+A few enormous weights mean a few observations dominate the estimate —
+the classic symptom of thin overlap:
+
+```{r weights}
+plot(fit, type = "weights")
+```
+
 ### A formal balance test
 
 The love plot is an eyeball test; `balance_test()` is the formal one. It
@@ -276,15 +288,6 @@ complier_means(fit)
 
 The weights themselves are available through `kappa_weights(fit)` for
 building other complier summaries.
-
-### Weight distributions
-
-A few enormous weights mean a few observations dominate the estimate —
-the classic symptom of thin overlap:
-
-```{r weights}
-plot(fit, type = "weights")
-```
 
 ## 5. Choosing models and options
 
