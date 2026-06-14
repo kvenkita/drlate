@@ -39,3 +39,17 @@ Imai, K. and Ratkovic, M. (2014). Covariate Balancing Propensity Score.
 
 [`balance()`](https://kvenkita.github.io/drlate/reference/balance.md)
 for the standardized-mean-difference diagnostics.
+
+## Examples
+
+``` r
+fit <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+              rsncode ~ age + educ, data = drlate_sim)
+balance_test(fit)
+#> Imai-Ratkovic covariate-balance test (overidentification)
+#> 
+#>   Hansen J = 3.0473   df = 4   p-value = 0.5499
+#>   Instrument propensity score: logit (n = 2000)
+#> 
+#>   H0: the propensity-score model balances the covariates.
+```

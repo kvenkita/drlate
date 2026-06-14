@@ -39,3 +39,15 @@ A numeric vector with one entry per estimation-sample observation.
 ## See also
 
 [`complier_means()`](https://kvenkita.github.io/drlate/reference/complier_means.md)
+
+## Examples
+
+``` r
+fit <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+              rsncode ~ age + educ, data = drlate_sim)
+head(kappa_weights(fit))
+#>             1             2             3             4             5 
+#> -0.0008924724  0.0008266047 -0.0012620743  0.0008266047  0.0008266047 
+#>             6 
+#>  0.0008266047 
+```

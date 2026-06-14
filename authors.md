@@ -19,14 +19,14 @@ Source:
 [`inst/CITATION`](https://github.com/kvenkita/drlate/blob/main/inst/CITATION)
 
 Venkitasubramanian, K. (2026). drlate: Doubly Robust Estimation of the
-Local Average Treatment Effect in R. R package version 0.2.0.9000.
+Local Average Treatment Effect in R. R package version 0.3.0.
 https://github.com/kvenkita/drlate
 
     @Manual{,
       title = {drlate: Doubly Robust Estimation of the Local Average Treatment Effect in R},
       author = {Kailas Venkitasubramanian},
       year = {2026},
-      note = {R package version 0.2.0.9000},
+      note = {R package version 0.3.0},
       url = {https://github.com/kvenkita/drlate},
     }
 

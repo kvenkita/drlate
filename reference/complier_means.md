@@ -42,3 +42,15 @@ Covariate values are reported on their original scale.
 ## See also
 
 [`kappa_weights()`](https://kvenkita.github.io/drlate/reference/kappa_weights.md)
+
+## Examples
+
+``` r
+fit <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+              rsncode ~ age + educ, data = drlate_sim)
+complier_means(fit)
+#>       variable population_mean complier_mean   difference
+#> 1          age         34.5560    34.3303393 -0.225660695
+#> 2  educcollege          0.3615     0.3590211 -0.002478943
+#> 3 educgraduate          0.1395     0.1431700  0.003670025
+```

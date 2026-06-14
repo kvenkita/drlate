@@ -11,7 +11,8 @@ probability weighting (IPW), augmented inverse probability weighting
 (AIPW), and regression adjustment (RA) – and the Abadie-kappa weighting
 estimators of Sloczynski, Uysal, and Wooldridge (2025)
 [doi:10.1080/07350015.2024.2332763](https://doi.org/10.1080/07350015.2024.2332763)
-. Supports linear, logistic, or Poisson outcome and treatment models,
+. Supports linear, logistic, probit, Poisson, and fractional
+(fractional-logit and fractional-probit) outcome and treatment models,
 and instrument propensity scores estimated by maximum likelihood,
 covariate balancing (CBPS), or inverse probability tilting (IPT).
 Standard errors are computed jointly for all estimation stages by
