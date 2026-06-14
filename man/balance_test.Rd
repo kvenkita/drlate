@@ -23,6 +23,11 @@ large statistic is evidence that the propensity-score model does not balance
 the covariates --- a misspecification diagnostic. This is the
 \proglang{Stata} \code{latebalance overid} postestimation feature.
 }
+\examples{
+fit <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+              rsncode ~ age + educ, data = drlate_sim)
+balance_test(fit)
+}
 \references{
 Imai, K. and Ratkovic, M. (2014). Covariate Balancing Propensity
 Score. \emph{Journal of the Royal Statistical Society B} 76(1), 243--263.

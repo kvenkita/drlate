@@ -1,4 +1,4 @@
-# drlate (development version)
+# drlate 0.3.0
 
 New outcome and treatment model families, completing parity with the Stata
 `lateffects` `omodel`/`tmodel` options:

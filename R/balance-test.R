@@ -26,6 +26,10 @@
 #' @references Imai, K. and Ratkovic, M. (2014). Covariate Balancing Propensity
 #'   Score. \emph{Journal of the Royal Statistical Society B} 76(1), 243--263.
 #' @seealso [balance()] for the standardized-mean-difference diagnostics.
+#' @examples
+#' fit <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+#'               rsncode ~ age + educ, data = drlate_sim)
+#' balance_test(fit)
 #' @export
 balance_test <- function(object) {
   ctx <- need_ctx(object)

@@ -28,6 +28,11 @@ data, \eqn{E[g \mid \mathrm{complier}] = E[\kappa g] / E[\kappa]}
 (Abadie 2003). They are the weights used by \code{\link[=complier_means]{complier_means()}} and are the
 \proglang{Stata} \code{estat compliers, genkappa()} object.
 }
+\examples{
+fit <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+              rsncode ~ age + educ, data = drlate_sim)
+head(kappa_weights(fit))
+}
 \seealso{
 \code{\link[=complier_means]{complier_means()}}
 }

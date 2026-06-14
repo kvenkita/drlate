@@ -1,40 +1,49 @@
 # cran-comments
 
-## Submission of drlate 0.2.0 (first CRAN submission)
+## Submission of drlate 0.3.0 (first CRAN submission)
 
 drlate estimates the local average treatment effect (LATE/LATT) with a
 binary instrument, implementing the doubly robust estimators of
 Słoczyński, Uysal & Wooldridge (2022) <doi:10.48550/arXiv.2208.01300> and
 the Abadie-kappa weighting estimators of Słoczyński, Uysal & Wooldridge
-(2025) <doi:10.1080/07350015.2024.2332763>.
+(2025) <doi:10.1080/07350015.2024.2332763>. Standard errors for every
+estimator come from one jointly stacked M-estimation system, and the package
+adds weak-instrument-robust Fieller confidence sets, a cluster-aware
+bootstrap, design diagnostics, and a doubly robust Hausman test. This first
+release also includes probit and fractional (fractional-logit and
+fractional-probit) outcome families and a postestimation suite (complier
+profiling and an overidentification balance test).
 
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note.
 
-This is a new submission. The only NOTE on win-builder (R-devel) is the
-standard new-submission note together with a list of "possibly misspelled
-words" in DESCRIPTION. Every flagged word is a proper noun or an
-established acronym in the field, and is spelled correctly:
+This is a new submission. The only substantive NOTE is the standard
+new-submission note, together with a list of "possibly misspelled words" in
+DESCRIPTION. Every flagged word is a proper noun, an established acronym, or
+standard terminology in the field, and is spelled correctly:
 
 * Acronyms: AIPW, CBPS, IPT, IPW, IPWRA, LATT (inverse probability weighted
   regression adjustment and related estimator names; the local average
   treatment effect on the treated).
-* Proper nouns: Abadie, Fieller, Hausman, Sloczynski, Stata, Uysal,
+* Proper nouns: Abadie, Fieller, Hausman, Poisson, Sloczynski, Stata, Uysal,
   Wooldridge (authors and named methods/software).
-* "unconfoundedness" is standard causal-inference terminology.
+* Field terms: probit and unconfoundedness are standard causal-inference
+  terminology.
 
 A "checking for future file timestamps ... unable to verify current time"
 NOTE may also appear on some machines; it is environmental.
 
 ## Test environments
 
-* win-builder, R-devel (2026-06-08): Status OK, 1 NOTE (new submission /
-  DESCRIPTION word list, as above). Tests, vignette rebuild, PDF manual,
-  and examples all OK.
-* win-builder, R-release: submitted (result consistent with R-devel
-  expected).
-* local: Windows 11, R release — 0 errors, 0 warnings, 1 environmental note.
+* local: Windows 11, R 4.4.3 -- 0 errors, 0 warnings, 1 environmental note.
+* win-builder (R-devel and R-release): to be run at submission via
+  `devtools::check_win_devel()` / `check_win_release()`.
+
+(The earlier 0.2.0 milestone passed win-builder R-devel on 2026-06-08 with
+the new-submission NOTE only; 0.3.0 adds the postestimation functions and the
+probit/fractional families described above and should be re-checked on
+win-builder before final submission.)
 
 ## Possibly-invalid URL note
 

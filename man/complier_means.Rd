@@ -29,6 +29,11 @@ compliers differ from the population aids interpretation. This is the
 \details{
 Covariate values are reported on their original scale.
 }
+\examples{
+fit <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+              rsncode ~ age + educ, data = drlate_sim)
+complier_means(fit)
+}
 \seealso{
 \code{\link[=kappa_weights]{kappa_weights()}}
 }

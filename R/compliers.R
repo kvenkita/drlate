@@ -20,6 +20,10 @@
 #'   kappa values are returned.
 #' @return A numeric vector with one entry per estimation-sample observation.
 #' @seealso [complier_means()]
+#' @examples
+#' fit <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+#'               rsncode ~ age + educ, data = drlate_sim)
+#' head(kappa_weights(fit))
 #' @export
 kappa_weights <- function(object, normalize = TRUE) {
   ctx <- need_ctx(object)
@@ -53,6 +57,10 @@ kappa_weights <- function(object, normalize = TRUE) {
 #'   `population_mean`, `complier_mean`, and `difference`
 #'   (`complier_mean - population_mean`).
 #' @seealso [kappa_weights()]
+#' @examples
+#' fit <- drlate(lwage ~ age + educ, nvstat ~ age + educ,
+#'               rsncode ~ age + educ, data = drlate_sim)
+#' complier_means(fit)
 #' @export
 complier_means <- function(object, vars = NULL) {
   ctx <- need_ctx(object)
