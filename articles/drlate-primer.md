@@ -385,9 +385,9 @@ in the weights:
 - `ivmodel = "ipt"` — inverse probability tilting (Graham, Pinto, and
   Egel 2012): fits a separate tilted score per arm; the resulting
   weights are exactly normalized by construction.
-- `ivmodel = "probit"` *(new in 0.2.0)* — probit maximum likelihood,
-  mirroring `kappalate`’s `zmodel(probit)`; available for the weighting
-  estimators (`"ipw"` and the kappa methods of Section 6).
+- `ivmodel = "probit"` — probit maximum likelihood, mirroring
+  `kappalate`’s `zmodel(probit)`; available for the weighting estimators
+  (`"ipw"` and the kappa methods of Section 6).
 
 ``` r
 
@@ -420,7 +420,7 @@ coef(drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ age + educ,
 Weights (`weights =`) and clustered standard errors (`cluster =`) are
 available everywhere.
 
-## 6. Abadie’s kappa: the weighting-estimator menu *(new in 0.2.0)*
+## 6. Abadie’s kappa: the weighting-estimator menu
 
 The companion paper Słoczyński, Uysal, and Wooldridge (2025) studies the
 family of pure weighting estimators of the LATE motivated by Abadie’s

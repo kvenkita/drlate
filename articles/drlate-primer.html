@@ -483,10 +483,10 @@ instrument arms.</li>
 Pinto, and Egel 2012): fits a separate tilted score per arm; the
 resulting weights are exactly normalized by construction.</li>
 <li>
-<code>ivmodel = "probit"</code> <em>(new in 0.2.0)</em> — probit
-maximum likelihood, mirroring <code>kappalate</code>’s
-<code>zmodel(probit)</code>; available for the weighting estimators
-(<code>"ipw"</code> and the kappa methods of Section 6).</li>
+<code>ivmodel = "probit"</code> — probit maximum likelihood,
+mirroring <code>kappalate</code>’s <code>zmodel(probit)</code>;
+available for the weighting estimators (<code>"ipw"</code> and the kappa
+methods of Section 6).</li>
 </ul>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="../reference/drlate.html">drlate</a></span><span class="op">(</span><span class="va">lwage</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, <span class="va">nvstat</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>, <span class="va">rsncode</span> <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">educ</span>,</span>
@@ -517,8 +517,7 @@ do?”:</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="abadies-kappa-the-weighting-estimator-menu-new-in-0-2-0">6. Abadie’s kappa: the weighting-estimator menu <em>(new in
-0.2.0)</em><a class="anchor" aria-label="anchor" href="#abadies-kappa-the-weighting-estimator-menu-new-in-0-2-0"></a>
+<h2 id="abadies-kappa-the-weighting-estimator-menu">6. Abadie’s kappa: the weighting-estimator menu<a class="anchor" aria-label="anchor" href="#abadies-kappa-the-weighting-estimator-menu"></a>
 </h2>
 <p>The companion paper Słoczyński, Uysal, and Wooldridge (2025) studies
 the family of pure weighting estimators of the LATE motivated by

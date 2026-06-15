@@ -18,10 +18,10 @@ The estimation core supports:
   default, doubly robust), inverse probability weighting (`"ipw"`),
   augmented inverse probability weighting (`"aipw"`, doubly robust), and
   regression adjustment (`"ra"`).
-- **Abadie-kappa weighting estimators** *(new in 0.2.0)*: `"kappa"`
-  (kappalate’s `tau_a`), `"kappa0"` (`tau_a,0`), and `"kappa10"`
-  (`tau_a,10`); together with the two IPW variants (= `tau_u` and
-  `tau_a,1`) these complete the five-estimator menu of the 2025 paper.
+- **Abadie-kappa weighting estimators**: `"kappa"` (kappalate’s
+  `tau_a`), `"kappa0"` (`tau_a,0`), and `"kappa10"` (`tau_a,10`);
+  together with the two IPW variants (= `tau_u` and `tau_a,1`) these
+  complete the five-estimator menu of the 2025 paper.
 - **Outcome and treatment models**: linear, logistic, probit, or
   Poisson, plus fractional-logit and fractional-probit for outcomes in
   `[0, 1]`, so the response may be continuous, binary, a count, or a
@@ -31,7 +31,7 @@ The estimation core supports:
   regression by maximum likelihood (default), covariate balancing
   (`"cbps"`, Imai and Ratkovic 2014), inverse probability tilting
   (`"ipt"`, Graham, Pinto, and Egel 2012), or probit maximum likelihood
-  (`"probit"`, for the weighting estimators; *new in 0.2.0*).
+  (`"probit"`, for the weighting estimators).
 - **Normalized** (default) or unnormalized weighting for IPW and AIPW.
 - Sampling weights and cluster-robust standard errors.
 
@@ -186,7 +186,7 @@ drlate(lwage ~ age + educ, nvstat ~ age + educ, rsncode ~ 1,
 #> First stage (Z on D): z = 33.01 (z^2 ~ first-stage F = 1090)
 ```
 
-### Abadie-kappa weighting estimators *(new in 0.2.0)*
+### Abadie-kappa weighting estimators
 
 The kappa methods are pure weighting estimators — covariates enter only
 through the instrument propensity score, so the outcome and treatment

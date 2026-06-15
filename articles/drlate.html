@@ -91,8 +91,8 @@ probability weighting (<code>"ipw"</code>), augmented inverse
 probability weighting (<code>"aipw"</code>, doubly robust), and
 regression adjustment (<code>"ra"</code>).</li>
 <li>
-<strong>Abadie-kappa weighting estimators</strong> <em>(new in
-0.2.0)</em>: <code>"kappa"</code> (kappalate’s <code>tau_a</code>),
+<strong>Abadie-kappa weighting estimators</strong>:
+<code>"kappa"</code> (kappalate’s <code>tau_a</code>),
 <code>"kappa0"</code> (<code>tau_a,0</code>), and <code>"kappa10"</code>
 (<code>tau_a,10</code>); together with the two IPW variants (=
 <code>tau_u</code> and <code>tau_a,1</code>) these complete the
@@ -110,7 +110,7 @@ options).</li>
 (default), covariate balancing (<code>"cbps"</code>, Imai and Ratkovic
 2014), inverse probability tilting (<code>"ipt"</code>, Graham, Pinto,
 and Egel 2012), or probit maximum likelihood (<code>"probit"</code>, for
-the weighting estimators; <em>new in 0.2.0</em>).</li>
+the weighting estimators).</li>
 <li>
 <strong>Normalized</strong> (default) or unnormalized weighting for
 IPW and AIPW.</li>
@@ -263,7 +263,7 @@ the treatment (denominator), with the LATE formed as their ratio.</p>
 <span><span class="co">#&gt; First stage (Z on D): z = 33.01 (z^2 ~ first-stage F = 1090)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="abadie-kappa-weighting-estimators-new-in-0-2-0">Abadie-kappa weighting estimators <em>(new in 0.2.0)</em><a class="anchor" aria-label="anchor" href="#abadie-kappa-weighting-estimators-new-in-0-2-0"></a>
+<h3 id="abadie-kappa-weighting-estimators">Abadie-kappa weighting estimators<a class="anchor" aria-label="anchor" href="#abadie-kappa-weighting-estimators"></a>
 </h3>
 <p>The kappa methods are pure weighting estimators — covariates enter
 only through the instrument propensity score, so the outcome and
