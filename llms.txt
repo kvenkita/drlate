@@ -84,7 +84,7 @@ summary(fit)
 If you use drlate in your research, please cite:
 
 > Venkitasubramanian, K. (2026). drlate: Doubly Robust Estimation of the
-> Local Average Treatment Effect in R. R package version 0.2.0.
+> Local Average Treatment Effect in R. R package version 0.3.0.
 > <https://github.com/kvenkita/drlate>
 
 and the methodological papers whose estimators you use:
