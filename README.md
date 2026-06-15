@@ -22,25 +22,6 @@ weak-instrument-robust Fieller confidence sets, cluster-aware bootstrap
 inference, estimator comparison, and the 2022 paper's doubly robust
 Hausman test of unconfoundedness.
 
-## What's new in 0.2.0
-
-* The Abadie-kappa weighting menu from Słoczyński, Uysal & Wooldridge
-  (2025, *JBES*): `method = "kappa"` (`tau_a`), `"kappa0"` (`tau_a,0`),
-  and `"kappa10"` (`tau_a,10`), validated against the Stata `kappalate`
-  command. drlate's normalized and unnormalized IPW coincide with
-  `kappalate`'s `tau_u` and `tau_a,1`, completing the five-estimator menu.
-* Cluster-robust standard errors, sampling weights, the bootstrap, and,
-  uniquely, Fieller weak-instrument-robust confidence sets are available
-  on the kappa estimators (the Stata command offers robust/cluster
-  standard errors only).
-* Probit instrument propensity scores (`ivmodel = "probit"`, mirroring
-  `kappalate`'s `zmodel(probit)`) for the weighting estimators. With this,
-  every estimator and propensity-score option of the Stata `kappalate`
-  command is covered and fixture-validated.
-* Printed output shows the `kappalate` estimator names throughout.
-
-See [NEWS](NEWS.md) for the full changelog.
-
 ## Installation
 
 ```r
