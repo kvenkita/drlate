@@ -1,6 +1,25 @@
 # cran-comments
 
-## Submission of drlate 0.3.0 (first CRAN submission)
+## Resubmission (drlate 0.3.1)
+
+This is a resubmission of a first submission. In the previous version the
+CRAN reviewer asked:
+
+> Please add \value to .Rd files regarding exported methods and explain the
+> functions results in the documentation. [...]
+> Missing Rd-tags: confint.drlate.Rd: \value
+
+Fixed: the `confint()` method now documents its return value with an
+`@return` tag, describing the class and structure of the output for both the
+default Wald/bootstrap intervals (a numeric matrix of confidence limits) and
+`method = "fieller"` (a `"drlate_fieller"` object). The corresponding
+`confint.drlate.Rd` now contains a `\value` section. No other exported
+function was missing `\value`; the data (`drlate_sim`) and package
+(`drlate-package`) topics use `\format` and the package overview
+respectively, as expected. The version has been incremented to 0.3.1; no
+code changed.
+
+## Package summary (first CRAN submission)
 
 drlate estimates the local average treatment effect (LATE/LATT) with a
 binary instrument, implementing the doubly robust estimators of
@@ -37,13 +56,9 @@ NOTE may also appear on some machines; it is environmental.
 ## Test environments
 
 * local: Windows 11, R 4.4.3 -- 0 errors, 0 warnings, 1 environmental note.
-* win-builder (R-devel and R-release): to be run at submission via
-  `devtools::check_win_devel()` / `check_win_release()`.
-
-(The earlier 0.2.0 milestone passed win-builder R-devel on 2026-06-08 with
-the new-submission NOTE only; 0.3.0 adds the postestimation functions and the
-probit/fractional families described above and should be re-checked on
-win-builder before final submission.)
+* win-builder (R-devel and R-release): the 0.3.0 submission passed both with
+  the new-submission NOTE only. 0.3.1 differs from 0.3.0 only in the added
+  `\value` documentation (no code change).
 
 ## Possibly-invalid URL note
 

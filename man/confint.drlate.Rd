@@ -25,6 +25,22 @@ returned as a \code{"drlate_fieller"} object with its own print method.}
 
 \item{...}{Currently unused.}
 }
+\value{
+For \code{method = "default"}, a numeric matrix with one row per requested
+coefficient (\code{parm}) and two columns holding the lower and upper
+confidence limits. The columns are labelled with the corresponding
+percentiles (for the default 95\% level, \code{"2.5 \%"} and \code{"97.5 \%"}). The
+limits are Wald intervals from the joint sandwich covariance, or
+percentile intervals from the resampling draws when the fit was computed
+with \code{vcov = "bootstrap"}.
+
+For \code{method = "fieller"}, an object of class \code{"drlate_fieller"}: a list
+describing the weak-instrument-robust confidence set for the LATE/LATT
+ratio (its endpoints and shape, the estimand name, and the confidence
+level), with its own \code{print} method. Because a Fieller set need not be a
+bounded interval, it is returned in this form rather than as a matrix of
+endpoints.
+}
 \description{
 Confidence intervals for drlate fits
 }
