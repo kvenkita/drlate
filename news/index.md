@@ -1,6 +1,11 @@
 # Changelog
 
-## drlate 0.3.0
+## drlate 0.3.1
+
+First CRAN release. (The 0.3.0 submission was revised at CRAN’s request
+to document the return value of the
+[`confint()`](https://rdrr.io/r/stats/confint.html) method; the feature
+set below is unchanged.)
 
 New outcome and treatment model families, completing parity with the
 Stata `lateffects` `omodel`/`tmodel` options:

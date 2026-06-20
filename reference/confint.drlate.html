@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">drlate</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,6 +80,22 @@ returned as a <code>"drlate_fieller"</code> object with its own print method.</p
 <dd><p>Currently unused.</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>For <code>method = "default"</code>, a numeric matrix with one row per requested
+coefficient (<code>parm</code>) and two columns holding the lower and upper
+confidence limits. The columns are labelled with the corresponding
+percentiles (for the default 95% level, <code>"2.5 %"</code> and <code>"97.5 %"</code>). The
+limits are Wald intervals from the joint sandwich covariance, or
+percentile intervals from the resampling draws when the fit was computed
+with <code>vcov = "bootstrap"</code>.</p>
+<p>For <code>method = "fieller"</code>, an object of class <code>"drlate_fieller"</code>: a list
+describing the weak-instrument-robust confidence set for the LATE/LATT
+ratio (its endpoints and shape, the estimand name, and the confidence
+level), with its own <code>print</code> method. Because a Fieller set need not be a
+bounded interval, it is returned in this form rather than as a matrix of
+endpoints.</p>
+    </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

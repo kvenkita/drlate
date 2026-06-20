@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">drlate</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,8 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.3.0" id="drlate-030">drlate 0.3.0<a class="anchor" aria-label="anchor" href="#drlate-030"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.3.1" id="drlate-031">drlate 0.3.1<a class="anchor" aria-label="anchor" href="#drlate-031"></a></h2>
+<p>First CRAN release. (The 0.3.0 submission was revised at CRAN’s request to document the return value of the <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code> method; the feature set below is unchanged.)</p>
 <p>New outcome and treatment model families, completing parity with the Stata <code>lateffects</code> <code>omodel</code>/<code>tmodel</code> options:</p>
 <ul><li>
 <code>omodel</code> gains <code>"probit"</code> (binary outcome, probit link) and <code>"flogit"</code> / <code>"fprobit"</code> for <strong>fractional</strong> outcomes in <code>[0, 1]</code> (e.g. proportions or rates). <code>tmodel</code> gains <code>"probit"</code>. The fractional families share all estimation with their binary counterparts and only relax the response to the unit interval. They reuse the probit/logit quasi-likelihood scoring already validated for the instrument propensity score, and the test suite checks them against first principles: the fractional families coincide with their binary counterparts on a 0/1 response, and every fit reproduces the corresponding weighted <code>glm</code> estimate.</li>

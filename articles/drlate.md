@@ -460,7 +460,7 @@ methodological paper for the estimators you use, and the original Stata
 module (see `citation("drlate")` for BibTeX entries):
 
 > Venkitasubramanian, K. (2026). drlate: Doubly Robust Estimation of the
-> Local Average Treatment Effect in R. R package version 0.3.0.
+> Local Average Treatment Effect in R. R package version 0.3.1.
 > <https://github.com/kvenkita/drlate>
 
 > Słoczyński, T., Uysal, S. D., & Wooldridge, J. M. (2025). Abadie’s
